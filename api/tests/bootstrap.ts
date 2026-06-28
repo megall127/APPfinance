@@ -54,6 +54,7 @@ export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
  * We provide the function form to stay compatible on Node 22. The cast is
  * required because @japa/runner still types `exclude` as `string[]`.
  */
+// TODO: remove this function form + cast once Node >=24 is adopted (string[] form works natively).
 export const exclude = ((filePath: string) =>
   /(?:^|[\\/])(?:node_modules|\.git|coverage)(?:[\\/]|$)/.test(filePath)) as unknown as Config['exclude']
 
