@@ -57,7 +57,7 @@
   --popover:                 #FFFFFF;
   --popover-foreground:      #1F2937;
   --primary:                 #4CAF82;
-  --primary-foreground:      #FFFFFF;
+  --primary-foreground:      #1F2937; /* dark slate on soft green = 5.43:1 (WCAG AA) */
   --secondary:               #F5C84C;
   --secondary-foreground:    #1F2937;
   --muted:                   #F3F4F6;

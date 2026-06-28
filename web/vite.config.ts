@@ -13,8 +13,6 @@ export default defineConfig({
     alias: {
       // @/ alias for imports like: import x from '@/lib/x'
       '@': path.resolve(__dirname, './src'),
-      // src/ alias for shadcn-generated imports like: import { cn } from 'src/lib/utils'
-      'src': path.resolve(__dirname, './src'),
     },
   },
 })
