@@ -13,7 +13,7 @@ type UpsertDto = {
 
 type UpdateDto = {
   amount?: number
-  status?: string
+  status?: 'paid' | 'pending'
   note?: string
 }
 
@@ -84,6 +84,8 @@ export default class EntryService {
 
   /**
    * Update amount, status, and/or note on an existing entry.
+   * When status changes, paidAt is kept consistent (now() on paid, null on pending)
+   * so the invariant `status === 'paid' ⟹ paidAt IS NOT NULL` holds everywhere.
    * Workspace-scoped: 404 if entry does not belong to this workspace.
    */
   async update(workspaceId: number, id: number, dto: UpdateDto) {
@@ -93,7 +95,10 @@ export default class EntryService {
       .firstOrFail()
 
     if (dto.amount !== undefined) entry.amount = dto.amount.toFixed(2)
-    if (dto.status !== undefined) entry.status = dto.status
+    if (dto.status !== undefined) {
+      entry.status = dto.status
+      entry.paidAt = dto.status === 'paid' ? DateTime.now() : null
+    }
     if (dto.note !== undefined) entry.note = dto.note
 
     await entry.save()

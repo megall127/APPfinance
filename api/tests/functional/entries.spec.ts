@@ -153,6 +153,71 @@ test.group('Entries', (group) => {
   })
 
   /**
+   * Invariant: PATCH status must keep paidAt consistent.
+   * status='paid'  → paidAt non-null; status='pending' → paidAt null.
+   */
+  test('PATCH status gerencia paidAt (invariante paid ⟹ paidAt)', async ({ client, assert }) => {
+    const { token } = await registerAndAuth(client, 'epaidat@test.com')
+
+    const itemRes = await client
+      .post('/api/v1/items')
+      .bearerToken(token)
+      .json({ name: 'Gas', kind: 'expense' })
+    itemRes.assertStatus(201)
+    const item = itemRes.body()
+
+    const upsertRes = await client
+      .post('/api/v1/entries/upsert')
+      .bearerToken(token)
+      .json({ itemId: item.id, year: 2026, month: 6, amount: 50 })
+    upsertRes.assertStatus(200)
+    const entryId = upsertRes.body().id
+    // Sanity: starts pending with null paidAt
+    assert.equal(upsertRes.body().status, 'pending')
+    assert.isNull(upsertRes.body().paidAt)
+
+    // PATCH to paid → paidAt must be set
+    const toPaid = await client
+      .patch(`/api/v1/entries/${entryId}`)
+      .bearerToken(token)
+      .json({ status: 'paid' })
+    toPaid.assertStatus(200)
+    assert.equal(toPaid.body().status, 'paid')
+    assert.exists(toPaid.body().paidAt, 'paidAt must be set when PATCH status=paid')
+
+    // PATCH back to pending → paidAt must be cleared
+    const toPending = await client
+      .patch(`/api/v1/entries/${entryId}`)
+      .bearerToken(token)
+      .json({ status: 'pending' })
+    toPending.assertStatus(200)
+    assert.equal(toPending.body().status, 'pending')
+    assert.isNull(toPending.body().paidAt, 'paidAt must be null when PATCH status=pending')
+  })
+
+  /**
+   * Invariant: upsert with status='paid' must set paidAt.
+   */
+  test('upsert com status=paid seta paidAt', async ({ client, assert }) => {
+    const { token } = await registerAndAuth(client, 'eupaid@test.com')
+
+    const itemRes = await client
+      .post('/api/v1/items')
+      .bearerToken(token)
+      .json({ name: 'Seguro', kind: 'expense' })
+    itemRes.assertStatus(201)
+    const item = itemRes.body()
+
+    const res = await client
+      .post('/api/v1/entries/upsert')
+      .bearerToken(token)
+      .json({ itemId: item.id, year: 2026, month: 6, amount: 120, status: 'paid' })
+    res.assertStatus(200)
+    assert.equal(res.body().status, 'paid')
+    assert.exists(res.body().paidAt, 'paidAt must be set when upsert status=paid')
+  })
+
+  /**
    * Cross-workspace: user B cannot upsert using A's itemId → 404 or 422.
    */
   test('cross-workspace: user B nao pode usar itemId de A no upsert', async ({
@@ -212,6 +277,28 @@ test.group('Entries', (group) => {
       .bearerToken(userB.token)
       .json({ amount: 999 })
     patchRes.assertStatus(404)
+  })
+
+  /**
+   * Cross-workspace: user B's monthView must NOT include user A's items.
+   */
+  test('cross-workspace: monthView de B nao inclui itens de A', async ({ client, assert }) => {
+    const userA = await registerAndAuth(client, 'emvA@test.com')
+    const userB = await registerAndAuth(client, 'emvB@test.com')
+
+    const itemRes = await client
+      .post('/api/v1/items')
+      .bearerToken(userA.token)
+      .json({ name: 'A Secret', kind: 'expense' })
+    itemRes.assertStatus(201)
+    const itemA = itemRes.body()
+
+    const view = await client.get('/api/v1/entries?year=2026&month=6').bearerToken(userB.token)
+    view.assertStatus(200)
+
+    const rows = view.body() as Array<{ item: { id: number } }>
+    const ids = rows.map((r) => Number(r.item.id))
+    assert.notInclude(ids, Number(itemA.id), 'B must not see A items in monthView')
   })
 
   /**

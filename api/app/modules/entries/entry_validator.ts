@@ -8,8 +8,8 @@ import vine from '@vinejs/vine'
  */
 export const monthViewQueryValidator = vine.compile(
   vine.object({
-    year: vine.number(),
-    month: vine.number().min(1).max(12),
+    year: vine.number().withoutDecimals(),
+    month: vine.number().withoutDecimals().min(1).max(12),
   })
 )
 
@@ -25,9 +25,9 @@ export const monthViewQueryValidator = vine.compile(
  */
 export const upsertEntryValidator = vine.compile(
   vine.object({
-    itemId: vine.number(),
-    year: vine.number(),
-    month: vine.number().min(1).max(12),
+    itemId: vine.number().withoutDecimals(),
+    year: vine.number().withoutDecimals(),
+    month: vine.number().withoutDecimals().min(1).max(12),
     amount: vine.number(),
     status: vine.enum(['paid', 'pending'] as const).optional(),
     note: vine.string().optional(),
