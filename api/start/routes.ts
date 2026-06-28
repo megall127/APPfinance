@@ -104,6 +104,30 @@ router
       .use([middleware.auth(), middleware.currentWorkspace()])
 
     /**
+     * Dashboard — workspace-scoped monthly and yearly summaries.
+     * GET /dashboard?year=&month=  → monthly summary
+     * GET /dashboard/yearly?year=  → 12-month expense breakdown
+     * Note: /dashboard/yearly must be registered BEFORE the base /dashboard route
+     * to avoid any potential prefix conflicts (though they are both GET on different paths).
+     */
+    router
+      .group(() => {
+        router
+          .get('dashboard/yearly', [
+            () => import('#modules/dashboard/dashboard_controller'),
+            'yearly',
+          ])
+          .as('dashboard.yearly')
+        router
+          .get('dashboard', [
+            () => import('#modules/dashboard/dashboard_controller'),
+            'monthSummary',
+          ])
+          .as('dashboard.monthSummary')
+      })
+      .use([middleware.auth(), middleware.currentWorkspace()])
+
+    /**
      * Protected auth routes (valid bearer token required).
      * currentWorkspace is applied per-route — only `me` needs the workspace,
      * so `logout` is spared the extra query. Resource groups (Tasks 8-11)
