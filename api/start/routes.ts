@@ -31,6 +31,34 @@ router
       .prefix('auth')
 
     /**
+     * Categories resource — workspace-scoped CRUD.
+     * Both auth and currentWorkspace middleware run on every route in this group
+     * so ctx.workspace is available to the controller without extra per-route setup.
+     */
+    router
+      .group(() => {
+        router
+          .get('categories', [() => import('#modules/categories/categories_controller'), 'index'])
+          .as('categories.index')
+        router
+          .post('categories', [() => import('#modules/categories/categories_controller'), 'store'])
+          .as('categories.store')
+        router
+          .patch('categories/:id', [
+            () => import('#modules/categories/categories_controller'),
+            'update',
+          ])
+          .as('categories.update')
+        router
+          .delete('categories/:id', [
+            () => import('#modules/categories/categories_controller'),
+            'destroy',
+          ])
+          .as('categories.destroy')
+      })
+      .use([middleware.auth(), middleware.currentWorkspace()])
+
+    /**
      * Protected auth routes (valid bearer token required).
      * currentWorkspace is applied per-route — only `me` needs the workspace,
      * so `logout` is spared the extra query. Resource groups (Tasks 8-11)
