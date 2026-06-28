@@ -1,0 +1,14 @@
+{
+  "name": "lefinance",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Lefinance — controle de contas mensais familiar (API Adonis + Web React/PWA)",
+  "scripts": {
+    "dev:api": "npm --prefix api run dev",
+    "dev:web": "npm --prefix web run dev",
+    "install:api": "npm install --prefix api",
+    "install:web": "npm install --prefix web",
+    "install:all": "npm install --prefix api && npm install --prefix web",
+    "test:api": "npm --prefix api test"
+  }
+}

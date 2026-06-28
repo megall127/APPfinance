@@ -3,6 +3,9 @@ node_modules/
 .pnp/
 .pnp.js
 
+# Subagent-driven dev scratch (ledger, briefs, diffs)
+.superpowers/
+
 # Builds
 dist/
 build/
