@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react'
 import {
   Plus,
-  Pencil,
-  Trash2,
   TrendingUp,
   TrendingDown,
   CreditCard,
@@ -10,20 +8,13 @@ import {
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { formatBRL } from '@/lib/format'
 import { useCategories } from '@/features/categorias/useCategories'
 import { useItems, useDeleteItem, type Item, type ItemKind } from './useItems'
 import { ItemFormDialog } from './ItemFormDialog'
+import { ItemRow } from './ItemRow'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 
 // ── Tab config ────────────────────────────────────────────────────────────────
 
@@ -55,131 +46,6 @@ const TABS: TabDef[] = [
   },
 ]
 
-// ── Delete confirm dialog ─────────────────────────────────────────────────────
-
-interface DeleteConfirmProps {
-  item: Item | null
-  onConfirm: () => void
-  onCancel: () => void
-  isPending: boolean
-}
-
-function DeleteConfirmDialog({
-  item,
-  onConfirm,
-  onCancel,
-  isPending,
-}: DeleteConfirmProps) {
-  return (
-    <Dialog open={!!item} onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Confirmar exclusão</DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          Deseja excluir o item{' '}
-          <span className="font-semibold text-foreground">{item?.name}</span>?{' '}
-          <span className="block mt-1">
-            Se ele tiver lançamentos associados, será desativado em vez de
-            excluído.
-          </span>
-        </p>
-        <DialogFooter>
-          <Button variant="outline" onClick={onCancel} disabled={isPending}>
-            Cancelar
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isPending}
-          >
-            {isPending ? 'Aguarde…' : 'Excluir'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// ── Item row ──────────────────────────────────────────────────────────────────
-
-interface ItemRowProps {
-  item: Item
-  categoryName?: string
-  categoryColor?: string
-  onEdit: (item: Item) => void
-  onDelete: (item: Item) => void
-}
-
-function ItemRow({
-  item,
-  categoryName,
-  categoryColor,
-  onEdit,
-  onDelete,
-}: ItemRowProps) {
-  const isActive = Boolean(item.isActive)
-  const amount = item.defaultAmount ? Number(item.defaultAmount) : null
-
-  return (
-    <div
-      className={`flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-muted/50 transition-colors group ${
-        !isActive ? 'opacity-50' : ''
-      }`}
-    >
-      {/* Name + inactive badge */}
-      <div className="flex-1 min-w-0">
-        <span className="font-medium text-sm text-foreground truncate block">
-          {item.name}
-          {!isActive && (
-            <Badge variant="secondary" className="ml-2 text-xs">
-              Inativo
-            </Badge>
-          )}
-        </span>
-      </div>
-
-      {/* Category badge */}
-      {categoryName && (
-        <span
-          className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full text-white shrink-0"
-          style={{ backgroundColor: categoryColor ?? '#94a3b8' }}
-        >
-          {categoryName}
-        </span>
-      )}
-
-      {/* Default amount */}
-      {amount !== null && !isNaN(amount) && (
-        <span className="text-sm tabular-nums text-foreground/80 shrink-0">
-          {formatBRL(amount)}
-        </span>
-      )}
-
-      {/* Actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          aria-label="Editar"
-          onClick={() => onEdit(item)}
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-destructive hover:text-destructive"
-          aria-label="Excluir"
-          onClick={() => onDelete(item)}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-    </div>
-  )
-}
 
 // ── Tab panel (one per kind) ──────────────────────────────────────────────────
 
@@ -369,7 +235,10 @@ export default function ItensPage() {
 
       {/* ── Delete confirm dialog ── */}
       <DeleteConfirmDialog
-        item={toDelete}
+        open={!!toDelete}
+        entityLabel="o item"
+        entityName={toDelete?.name}
+        hint="Se ele tiver lançamentos associados, será desativado em vez de excluído."
         onConfirm={() => void handleDeleteConfirm()}
         onCancel={() => setToDelete(null)}
         isPending={deleteItem.isPending}

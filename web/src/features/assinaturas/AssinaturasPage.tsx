@@ -1,154 +1,15 @@
 import { useState, useMemo } from 'react'
-import { CreditCard, Plus, Pencil, Trash2, LoaderCircle } from 'lucide-react'
+import { CreditCard, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { formatBRL } from '@/lib/format'
 import { useCategories } from '@/features/categorias/useCategories'
 import { useItems, useDeleteItem, type Item } from '@/features/itens/useItems'
 import { ItemFormDialog } from '@/features/itens/ItemFormDialog'
-
-// ── Delete confirm dialog ─────────────────────────────────────────────────────
-
-interface DeleteConfirmProps {
-  item: Item | null
-  onConfirm: () => void
-  onCancel: () => void
-  isPending: boolean
-}
-
-function DeleteConfirmDialog({
-  item,
-  onConfirm,
-  onCancel,
-  isPending,
-}: DeleteConfirmProps) {
-  return (
-    <Dialog open={!!item} onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Confirmar exclusão</DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          Deseja excluir a assinatura{' '}
-          <span className="font-semibold text-foreground">{item?.name}</span>?{' '}
-          <span className="block mt-1">
-            Se ela tiver lançamentos associados, será desativada em vez de
-            excluída.
-          </span>
-        </p>
-        <DialogFooter>
-          <Button variant="outline" onClick={onCancel} disabled={isPending}>
-            Cancelar
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <>
-                <LoaderCircle className="h-4 w-4 animate-spin mr-1" />
-                Aguarde…
-              </>
-            ) : (
-              'Excluir'
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// ── Subscription row ──────────────────────────────────────────────────────────
-
-interface SubscriptionRowProps {
-  item: Item
-  categoryName?: string
-  categoryColor?: string
-  onEdit: (item: Item) => void
-  onDelete: (item: Item) => void
-}
-
-function SubscriptionRow({
-  item,
-  categoryName,
-  categoryColor,
-  onEdit,
-  onDelete,
-}: SubscriptionRowProps) {
-  const isActive = Boolean(item.isActive)
-  const amount = item.defaultAmount ? Number(item.defaultAmount) : null
-
-  return (
-    <div
-      className={`flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-muted/50 transition-colors group ${
-        !isActive ? 'opacity-50' : ''
-      }`}
-    >
-      {/* Name + inactive badge */}
-      <div className="flex-1 min-w-0">
-        <span className="font-medium text-sm text-foreground truncate block">
-          {item.name}
-          {!isActive && (
-            <Badge variant="secondary" className="ml-2 text-xs">
-              Inativo
-            </Badge>
-          )}
-        </span>
-      </div>
-
-      {/* Category badge */}
-      {categoryName && (
-        <span
-          className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full text-white shrink-0"
-          style={{ backgroundColor: categoryColor ?? '#94a3b8' }}
-        >
-          {categoryName}
-        </span>
-      )}
-
-      {/* Default amount */}
-      {amount !== null && !isNaN(amount) && (
-        <span className="text-sm tabular-nums text-foreground/80 shrink-0">
-          {formatBRL(amount)}
-        </span>
-      )}
-
-      {/* Actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          aria-label="Editar"
-          onClick={() => onEdit(item)}
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-destructive hover:text-destructive"
-          aria-label="Excluir"
-          onClick={() => onDelete(item)}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-    </div>
-  )
-}
+import { ItemRow } from '@/features/itens/ItemRow'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -292,7 +153,7 @@ export default function AssinaturasPage() {
                   ? categoryMap.get(item.categoryId)
                   : undefined
                 return (
-                  <SubscriptionRow
+                  <ItemRow
                     key={item.id}
                     item={item}
                     categoryName={cat?.name}
@@ -318,7 +179,10 @@ export default function AssinaturasPage() {
 
       {/* ── Delete confirm dialog ── */}
       <DeleteConfirmDialog
-        item={toDelete}
+        open={!!toDelete}
+        entityLabel="a assinatura"
+        entityName={toDelete?.name}
+        hint="Se ela tiver lançamentos associados, será desativada em vez de excluída."
         onConfirm={() => void handleDeleteConfirm()}
         onCancel={() => setToDelete(null)}
         isPending={deleteItem.isPending}

@@ -59,4 +59,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split recharts (and its transitive deps) into a dedicated chunk
+        // so the main app bundle stays lean.
+        manualChunks(id: string) {
+          if (id.includes('/recharts/') || id.includes('/victory-vendor/')) {
+            return 'recharts'
+          }
+        },
+      },
+    },
+  },
 })

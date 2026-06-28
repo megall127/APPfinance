@@ -11,7 +11,7 @@ export default function DashboardPage() {
   const [year, setYear] = useState(() => new Date().getFullYear())
   const [month, setMonth] = useState(() => new Date().getMonth() + 1) // getMonth() is 0-based → +1
 
-  const { data: dashData, isLoading: dashLoading } = useDashboard(year, month)
+  const { data: dashData, isLoading: dashLoading, isError: dashError } = useDashboard(year, month)
   const { data: yearlyData, isLoading: yearlyLoading } = useYearly(year)
 
   return (
@@ -35,6 +35,11 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Summary cards ── */}
+      {dashError && !dashLoading && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          Erro ao carregar os dados do período. Tente novamente.
+        </div>
+      )}
       <SummaryCards data={dashData} isLoading={dashLoading} />
 
       {/* ── Charts: yearly evolution (left) + category breakdown (right) ── */}
