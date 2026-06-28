@@ -6,10 +6,10 @@ import { CategoryBreakdownChart } from './CategoryBreakdownChart'
 import { YearlyEvolutionChart } from './YearlyEvolutionChart'
 
 export default function DashboardPage() {
-  // Default to the current year and 1-based month
-  const now = new Date()
-  const [year, setYear] = useState(now.getFullYear())
-  const [month, setMonth] = useState(now.getMonth() + 1) // getMonth() is 0-based → +1
+  // Default to the current year and 1-based month.
+  // Lazy initializers so new Date() is only allocated once, not every render.
+  const [year, setYear] = useState(() => new Date().getFullYear())
+  const [month, setMonth] = useState(() => new Date().getMonth() + 1) // getMonth() is 0-based → +1
 
   const { data: dashData, isLoading: dashLoading } = useDashboard(year, month)
   const { data: yearlyData, isLoading: yearlyLoading } = useYearly(year)

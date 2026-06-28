@@ -34,7 +34,7 @@ function lineTooltipContent({
   payload,
   label,
 }: TooltipContentProps) {
-  if (!active || !payload.length) return null
+  if (!active || !payload?.length) return null
   return (
     <div className="rounded-lg border bg-card shadow-md p-2.5 text-xs space-y-1">
       <p className="font-semibold text-foreground">
@@ -80,6 +80,10 @@ export function YearlyEvolutionChart({
     pago: m.paid,
   }))
 
+  const hasData =
+    chartData.length > 0 &&
+    chartData.some((m) => m.total > 0 || m.pago > 0)
+
   return (
     <Card className="rounded-2xl shadow-sm">
       <CardHeader>
@@ -88,6 +92,13 @@ export function YearlyEvolutionChart({
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {!hasData ? (
+          <div className="flex h-[300px] items-center justify-center">
+            <p className="text-sm text-muted-foreground">
+              Sem dados para este ano
+            </p>
+          </div>
+        ) : (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart
             data={chartData}
@@ -139,6 +150,7 @@ export function YearlyEvolutionChart({
             />
           </LineChart>
         </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   )

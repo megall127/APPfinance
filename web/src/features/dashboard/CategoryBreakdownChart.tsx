@@ -18,7 +18,7 @@ function categoryTooltipContent({
   active,
   payload,
 }: TooltipContentProps) {
-  if (!active || !payload.length) return null
+  if (!active || !payload?.length) return null
   const item = payload[0]
   return (
     <div className="rounded-lg border bg-card shadow-md p-2.5 text-xs space-y-0.5">
