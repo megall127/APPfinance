@@ -19,7 +19,7 @@ lefinance/
 
 | Requisito | Versão mínima | Observação |
 |---|---|---|
-| **Node.js** | 22+ | A API usa `--experimental-vm-modules` (baked nos scripts); Node 20 também funciona |
+| **Node.js** | 22+ | A API roda em AdonisJS 7 com `--experimental-transform-types` (já embutido nos scripts via `NODE_OPTIONS`); por isso exige Node 22+ |
 | **XAMPP** | qualquer | MySQL rodando em `localhost:3306` |
 
 Crie o schema antes de rodar as migrações:
