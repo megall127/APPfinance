@@ -128,6 +128,21 @@ router
       .use([middleware.auth(), middleware.currentWorkspace()])
 
     /**
+     * Import — workspace-scoped spreadsheet import (.xlsx → preview → commit).
+     * Both routes accept a multipart `file` field.
+     */
+    router
+      .group(() => {
+        router
+          .post('import/preview', [() => import('#modules/import/import_controller'), 'preview'])
+          .as('import.preview')
+        router
+          .post('import/commit', [() => import('#modules/import/import_controller'), 'commit'])
+          .as('import.commit')
+      })
+      .use([middleware.auth(), middleware.currentWorkspace()])
+
+    /**
      * Protected auth routes (valid bearer token required).
      * currentWorkspace is applied per-route — only `me` needs the workspace,
      * so `logout` is spared the extra query. Resource groups (Tasks 8-11)
