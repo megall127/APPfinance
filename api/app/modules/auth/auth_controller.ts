@@ -1,4 +1,5 @@
 import { inject } from '@adonisjs/core'
+import db from '@adonisjs/lucid/services/db'
 import type { HttpContext } from '@adonisjs/core/http'
 import User from '#models/user'
 import Workspace from '#models/workspace'
@@ -11,13 +12,21 @@ export default class AuthController {
 
   /**
    * POST /api/v1/auth/register
-   * Creates the user, provisions workspace, returns 201 { user, token, workspace }
+   * Creates the user + provisions the workspace atomically (one transaction),
+   * then issues a token. Returns 201 { user, token, workspace }.
    */
   async register({ request, response }: HttpContext) {
     const { fullName, email, password } = await request.validateUsing(registerValidator)
 
-    const user = await User.create({ fullName, email, password })
-    const workspace = await this.workspaceService.provisionForUser(user)
+    // User creation and workspace provisioning share ONE transaction so a
+    // failure in provisioning rolls back the user too (no orphan accounts).
+    const { user, workspace } = await db.transaction(async (trx) => {
+      const created = await User.create({ fullName, email, password }, { client: trx })
+      const ws = await this.workspaceService.provisionForUser(created, trx)
+      return { user: created, workspace: ws }
+    })
+
+    // Token creation happens after the transaction commits.
     const token = await User.accessTokens.create(user)
 
     return response.created({
@@ -36,7 +45,7 @@ export default class AuthController {
 
     const user = await User.verifyCredentials(email, password)
     const token = await User.accessTokens.create(user)
-    const workspace = await Workspace.query().where('ownerUserId', user.id).firstOrFail()
+    const workspace = await this.#workspaceFor(user)
 
     return {
       user: user.serialize(),
@@ -51,7 +60,7 @@ export default class AuthController {
    */
   async me({ auth }: HttpContext) {
     const user = auth.getUserOrFail()
-    const workspace = await Workspace.query().where('ownerUserId', user.id).firstOrFail()
+    const workspace = await this.#workspaceFor(user)
 
     return {
       user: user.serialize(),
@@ -61,13 +70,19 @@ export default class AuthController {
 
   /**
    * POST /api/v1/auth/logout  [auth-protected]
-   * Revokes the current access token
+   * Revokes the current access token. Behind middleware.auth() the current
+   * token is always present, so we delete it unconditionally.
    */
   async logout({ auth }: HttpContext) {
     const user = auth.getUserOrFail()
-    if (user.currentAccessToken) {
-      await User.accessTokens.delete(user, user.currentAccessToken.identifier)
-    }
+    await User.accessTokens.delete(user, user.currentAccessToken!.identifier)
     return { revoked: true }
+  }
+
+  /**
+   * Resolve the workspace owned by the given user. Shared by login and me.
+   */
+  #workspaceFor(user: User) {
+    return Workspace.query().where('ownerUserId', user.id).firstOrFail()
   }
 }
