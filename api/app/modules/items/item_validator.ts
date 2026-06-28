@@ -25,6 +25,18 @@ export const createItemValidator = vine.compile(
 )
 
 /**
+ * Validator for the GET /api/v1/items query string.
+ *
+ * kind - optional; when present must be one of income | expense | card_subscription.
+ * An invalid kind yields 422 instead of silently returning an empty list.
+ */
+export const listItemsQueryValidator = vine.compile(
+  vine.object({
+    kind: vine.enum(['income', 'expense', 'card_subscription']).optional(),
+  })
+)
+
+/**
  * Validator for PATCH /api/v1/items/:id
  *
  * All fields optional — only provided fields are updated.

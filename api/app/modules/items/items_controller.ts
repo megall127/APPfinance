@@ -1,7 +1,11 @@
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import ItemService from '#modules/items/item_service'
-import { createItemValidator, updateItemValidator } from '#modules/items/item_validator'
+import {
+  createItemValidator,
+  listItemsQueryValidator,
+  updateItemValidator,
+} from '#modules/items/item_validator'
 
 @inject()
 export default class ItemsController {
@@ -12,7 +16,7 @@ export default class ItemsController {
    * List all items for the authenticated user's workspace, optionally filtered by kind.
    */
   async index({ request, workspace, response }: HttpContext) {
-    const kind = request.qs().kind as string | undefined
+    const { kind } = await listItemsQueryValidator.validate(request.qs())
     const items = await this.itemService.list(Number(workspace.id), kind)
     return response.ok(items.map((i) => i.serialize()))
   }

@@ -108,6 +108,65 @@ test.group('Items CRUD', (group) => {
   })
 
   /**
+   * PATCH guard: user A cannot reassign their own item to a categoryId that
+   * belongs to workspace B. Request must be rejected and the item's categoryId
+   * must remain unchanged.
+   */
+  test('PATCH /api/v1/items/:id with a foreign-workspace categoryId is rejected and does not mutate', async ({
+    client,
+    assert,
+  }) => {
+    const userA = await registerAndAuth(client, 'itempatchcatA@test.com')
+    const userB = await registerAndAuth(client, 'itempatchcatB@test.com')
+
+    // B creates a category in workspace B
+    const catBRes = await client
+      .post('/api/v1/categories')
+      .bearerToken(userB.token)
+      .json({ name: 'Cat B' })
+    catBRes.assertStatus(201)
+    const catBId = catBRes.body().id
+
+    // A creates an item in workspace A (no category)
+    const created = await client
+      .post('/api/v1/items')
+      .bearerToken(userA.token)
+      .json({ name: 'A Item', kind: 'expense' })
+    created.assertStatus(201)
+    const itemId = created.body().id
+
+    // A tries to PATCH their item using B's categoryId → must be rejected
+    const patchRes = await client
+      .patch(`/api/v1/items/${itemId}`)
+      .bearerToken(userA.token)
+      .json({ categoryId: Number(catBId) })
+
+    assert.notEqual(patchRes.status(), 200, 'Should not accept foreign categoryId on PATCH')
+    assert.isTrue(
+      patchRes.status() === 422 || patchRes.status() === 404,
+      `Expected 422 or 404, got ${patchRes.status()}`
+    )
+
+    // The item's categoryId must remain unchanged (still null)
+    const list = await client.get('/api/v1/items').bearerToken(userA.token)
+    const found = (list.body() as Array<{ id: number; categoryId: number | null }>).find(
+      (i) => Number(i.id) === Number(itemId)
+    )
+    assert.isNotOk(found?.categoryId, 'categoryId must not have been changed to a foreign value')
+  })
+
+  /**
+   * Query validation: an invalid ?kind value is rejected with 422
+   * rather than silently returning an empty list.
+   */
+  test('GET /api/v1/items?kind=bogus → 422', async ({ client }) => {
+    const { token } = await registerAndAuth(client, 'itembadquery@test.com')
+
+    const res = await client.get('/api/v1/items?kind=bogus').bearerToken(token)
+    res.assertStatus(422)
+  })
+
+  /**
    * Cross-workspace isolation: User B cannot GET, PATCH, or DELETE User A's items.
    */
   test('items are isolated per workspace — cross-workspace access yields 404', async ({
