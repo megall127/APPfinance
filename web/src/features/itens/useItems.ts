@@ -21,8 +21,8 @@ export interface CreateItemPayload {
   name: string
   kind: ItemKind
   categoryId?: string
-  /** Send as a number */
-  defaultAmount?: number
+  /** Send as a 2-decimal numeric STRING, e.g. "54.75" (API validates a decimal string). */
+  defaultAmount?: string
   isActive?: boolean
   sortOrder?: number
 }

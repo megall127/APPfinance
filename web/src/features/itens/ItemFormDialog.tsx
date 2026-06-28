@@ -129,7 +129,9 @@ export function ItemFormDialog({
         data.categoryId && data.categoryId !== '__none__'
           ? data.categoryId
           : undefined,
-      defaultAmount: parsedAmount ?? undefined,
+      // The API validates defaultAmount as a decimal STRING (e.g. "54.75"),
+      // so serialize the parsed number to a 2-decimal string.
+      defaultAmount: parsedAmount != null ? parsedAmount.toFixed(2) : undefined,
     }
 
     try {
