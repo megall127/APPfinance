@@ -3,10 +3,12 @@ import api from '@/lib/api'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+export type ItemKind = 'expense' | 'income' | 'card'
+
 export interface EntryItem {
   id: string
   name: string
-  kind: 'expense' | 'income'
+  kind: ItemKind
   categoryId: string
   categoryName?: string
   categoryColor?: string
@@ -60,11 +62,16 @@ interface UpsertPayload {
   note?: string
 }
 
+/** Optimistic-update context shared by both mutations. */
+interface MutationContext {
+  previous?: EntryRow[]
+}
+
 export function useUpsertEntry(year: number, month: number) {
   const qc = useQueryClient()
   const key = entriesKey(year, month)
 
-  return useMutation<Entry, Error, UpsertPayload>({
+  return useMutation<Entry, Error, UpsertPayload, MutationContext>({
     mutationFn: async (payload) => {
       const { data } = await api.post<Entry>('/entries/upsert', payload)
       return data
@@ -98,9 +105,8 @@ export function useUpsertEntry(year: number, month: number) {
     },
 
     onError: (_err, _payload, context) => {
-      const ctx = context as { previous?: EntryRow[] } | undefined
-      if (ctx?.previous !== undefined) {
-        qc.setQueryData(key, ctx.previous)
+      if (context?.previous !== undefined) {
+        qc.setQueryData(key, context.previous)
       }
     },
 
@@ -126,7 +132,7 @@ export function useTogglePaid(year: number, month: number) {
   const qc = useQueryClient()
   const key = entriesKey(year, month)
 
-  return useMutation<Entry, Error, TogglePayload>({
+  return useMutation<Entry, Error, TogglePayload, MutationContext>({
     mutationFn: async ({ entryId }) => {
       const { data } = await api.post<Entry>(`/entries/${entryId}/toggle-paid`)
       return data
@@ -157,9 +163,8 @@ export function useTogglePaid(year: number, month: number) {
     },
 
     onError: (_err, _payload, context) => {
-      const ctx = context as { previous?: EntryRow[] } | undefined
-      if (ctx?.previous !== undefined) {
-        qc.setQueryData(key, ctx.previous)
+      if (context?.previous !== undefined) {
+        qc.setQueryData(key, context.previous)
       }
     },
 

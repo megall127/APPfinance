@@ -12,7 +12,7 @@ interface EntryRowProps {
 
 export function EntryRow({ row, year, month }: EntryRowProps) {
   const { item, entry } = row
-  const { mutate: upsert } = useUpsertEntry(year, month)
+  const { mutate: upsert, isPending: upserting } = useUpsertEntry(year, month)
   const { mutate: toggle, isPending: toggling } = useTogglePaid(year, month)
 
   function handleCommit(amount: number) {
@@ -23,6 +23,10 @@ export function EntryRow({ row, year, month }: EntryRowProps) {
     if (!entry || entry.id === '__optimistic__') return
     toggle({ entryId: entry.id, itemId: item.id })
   }
+
+  // Disable the toggle while the entry is mid-creation (optimistic id) or
+  // either mutation is in flight, so the click isn't a silent no-op.
+  const toggleBusy = toggling || upserting || entry?.id === '__optimistic__'
 
   return (
     <TableRow>
@@ -39,7 +43,7 @@ export function EntryRow({ row, year, month }: EntryRowProps) {
         <StatusToggle
           entry={entry}
           onToggle={handleToggle}
-          isPending={toggling}
+          isPending={toggleBusy}
         />
       </TableCell>
     </TableRow>

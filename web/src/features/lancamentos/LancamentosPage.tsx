@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { Fragment, useState, useMemo } from 'react'
 import { MonthYearPicker } from '@/features/dashboard/MonthYearPicker'
 import { useEntries } from './useEntries'
 import { EntryRow } from './EntryRow'
+import { computeMonthSummary } from './math'
 import { formatBRL, MONTHS_PT } from '@/lib/format'
 import {
   Table,
@@ -22,19 +23,10 @@ interface SummaryFooterProps {
 }
 
 function SummaryFooter({ rows }: SummaryFooterProps) {
-  const { total, paid } = useMemo(() => {
-    let total = 0
-    let paid = 0
-    for (const { item, entry } of rows) {
-      if (item.kind !== 'expense' || !entry) continue
-      const amount = Number(entry.amount)
-      total += amount
-      if (entry.status === 'paid') paid += amount
-    }
-    return { total, paid }
-  }, [rows])
-
-  const falta = total - paid
+  const { total, pago, falta } = useMemo(
+    () => computeMonthSummary(rows),
+    [rows],
+  )
 
   return (
     <div className="mt-4 flex flex-wrap gap-4 justify-end text-sm">
@@ -45,7 +37,7 @@ function SummaryFooter({ rows }: SummaryFooterProps) {
       <div className="flex flex-col items-end">
         <span className="text-green-700 dark:text-green-400">Já pago</span>
         <span className="font-semibold tabular-nums text-green-700 dark:text-green-400">
-          {formatBRL(paid)}
+          {formatBRL(pago)}
         </span>
       </div>
       <div className="flex flex-col items-end">
@@ -79,7 +71,7 @@ export default function LancamentosPage() {
 
   const { data: rows, isLoading, isError } = useEntries(year, month)
 
-  // Group by category for display
+  // Group by category for display, preserving the category id for stable keys.
   const grouped = useMemo(() => {
     if (!rows) return []
     const map = new Map<string, { label: string; color: string; rows: EntryRowData[] }>()
@@ -92,7 +84,10 @@ export default function LancamentosPage() {
       }
       map.get(catId)!.rows.push(row)
     }
-    return Array.from(map.values())
+    return Array.from(map.entries()).map(([catId, group]) => ({
+      catId,
+      ...group,
+    }))
   }, [rows])
 
   const monthLabel = MONTHS_PT[month - 1]
@@ -152,10 +147,9 @@ export default function LancamentosPage() {
                   </TableHeader>
                   <TableBody>
                     {grouped.map((group) => (
-                      <>
+                      <Fragment key={group.catId}>
                         {/* Category group header */}
                         <TableRow
-                          key={`group-${group.label}`}
                           className="hover:bg-transparent border-b-0"
                         >
                           <TableCell
@@ -183,7 +177,7 @@ export default function LancamentosPage() {
                             month={month}
                           />
                         ))}
-                      </>
+                      </Fragment>
                     ))}
                   </TableBody>
                 </Table>

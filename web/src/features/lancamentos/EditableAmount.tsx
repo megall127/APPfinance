@@ -1,6 +1,7 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { Input } from '@/components/ui/input'
 import type { Entry } from './useEntries'
+import { parseAmountInput } from './math'
 
 interface EditableAmountProps {
   entry: Entry | null
@@ -38,17 +39,9 @@ export function EditableAmount({
     committedRef.current = newDisplay
   }
 
-  function parseBRL(value: string): number | null {
-    // Replace comma decimal separator with dot
-    const normalised = value.trim().replace(',', '.')
-    const parsed = parseFloat(normalised)
-    if (Number.isNaN(parsed) || parsed < 0) return null
-    return parsed
-  }
-
   function tryCommit() {
     if (raw === committedRef.current) return
-    const parsed = parseBRL(raw)
+    const parsed = parseAmountInput(raw)
     if (parsed === null) {
       // Reset to last committed value on invalid input
       setRaw(committedRef.current)
@@ -56,7 +49,7 @@ export function EditableAmount({
     }
     const roundedStr = parsed.toFixed(2)
     // Avoid calling onCommit when parsed value didn't change numerically
-    if (roundedStr === parseBRL(committedRef.current)?.toFixed(2)) {
+    if (roundedStr === parseAmountInput(committedRef.current)?.toFixed(2)) {
       setRaw(roundedStr)
       committedRef.current = roundedStr
       return
