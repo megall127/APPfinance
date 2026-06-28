@@ -32,6 +32,81 @@ export class AuthAccessTokenSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class CategorySchema extends BaseModel {
+  static $columns = ['archived', 'color', 'createdAt', 'icon', 'id', 'name', 'sortOrder', 'updatedAt', 'workspaceId'] as const
+  $columns = CategorySchema.$columns
+  @column()
+  declare archived: boolean
+  @column()
+  declare color: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare icon: string | null
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare name: string
+  @column()
+  declare sortOrder: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare workspaceId: bigint | number | null
+}
+
+export class ItemSchema extends BaseModel {
+  static $columns = ['categoryId', 'createdAt', 'defaultAmount', 'id', 'isActive', 'kind', 'name', 'sortOrder', 'updatedAt', 'workspaceId'] as const
+  $columns = ItemSchema.$columns
+  @column()
+  declare categoryId: bigint | number | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare defaultAmount: string | null
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare isActive: boolean
+  @column()
+  declare kind: string
+  @column()
+  declare name: string
+  @column()
+  declare sortOrder: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare workspaceId: bigint | number | null
+}
+
+export class MonthlyEntrySchema extends BaseModel {
+  static $columns = ['amount', 'createdAt', 'id', 'itemId', 'month', 'note', 'paidAt', 'status', 'updatedAt', 'workspaceId', 'year'] as const
+  $columns = MonthlyEntrySchema.$columns
+  @column()
+  declare amount: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare itemId: bigint | number | null
+  @column()
+  declare month: number
+  @column()
+  declare note: string | null
+  @column.dateTime()
+  declare paidAt: DateTime | null
+  @column()
+  declare status: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare workspaceId: bigint | number | null
+  @column()
+  declare year: number
+}
+
 export class UserSchema extends BaseModel {
   static $columns = ['createdAt', 'email', 'fullName', 'id', 'password', 'updatedAt'] as const
   $columns = UserSchema.$columns
@@ -47,4 +122,36 @@ export class UserSchema extends BaseModel {
   declare password: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+}
+
+export class WorkspaceSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'name', 'ownerUserId', 'updatedAt'] as const
+  $columns = WorkspaceSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare name: string
+  @column()
+  declare ownerUserId: number | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class WorkspaceMemberSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'role', 'updatedAt', 'userId', 'workspaceId'] as const
+  $columns = WorkspaceMemberSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare role: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number | null
+  @column()
+  declare workspaceId: bigint | number | null
 }

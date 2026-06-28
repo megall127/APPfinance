@@ -9,7 +9,6 @@
 
 import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
-import { controllers } from '#generated/controllers'
 
 router.get('/', () => {
   return { hello: 'world' }
@@ -17,21 +16,33 @@ router.get('/', () => {
 
 router
   .group(() => {
+    /**
+     * Public auth routes (no token required)
+     */
     router
       .group(() => {
-        router.post('signup', [controllers.NewAccount, 'store'])
-        router.post('login', [controllers.AccessTokens, 'store'])
+        router
+          .post('register', [() => import('#modules/auth/auth_controller'), 'register'])
+          .as('auth.register')
+        router
+          .post('login', [() => import('#modules/auth/auth_controller'), 'login'])
+          .as('auth.login')
       })
       .prefix('auth')
-      .as('auth')
 
+    /**
+     * Protected auth routes (valid bearer token required)
+     */
     router
       .group(() => {
-        router.get('profile', [controllers.Profile, 'show'])
-        router.post('logout', [controllers.AccessTokens, 'destroy'])
+        router
+          .get('me', [() => import('#modules/auth/auth_controller'), 'me'])
+          .as('auth.me')
+        router
+          .post('logout', [() => import('#modules/auth/auth_controller'), 'logout'])
+          .as('auth.logout')
       })
-      .prefix('account')
-      .as('profile')
+      .prefix('auth')
       .use(middleware.auth())
   })
   .prefix('/api/v1')
