@@ -9,8 +9,9 @@ const brlFormatter = new Intl.NumberFormat('pt-BR', {
  * to regular spaces so the result is a plain ASCII-friendly string.
  */
 export function formatBRL(n: number): string {
-  // eslint-disable-next-line no-irregular-whitespace
-  return brlFormatter.format(n).replace(/[  ]/g, ' ')
+  // Intl inserts NBSP (U+00A0) or narrow NBSP (U+202F) between R$ and the
+  // number; normalise both to a regular space for reliable comparisons.
+  return brlFormatter.format(n).replace(/[\u00A0\u202F]/g, ' ')
 }
 
 export const MONTHS_PT = [
