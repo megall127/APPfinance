@@ -80,6 +80,30 @@ router
       .use([middleware.auth(), middleware.currentWorkspace()])
 
     /**
+     * Entries resource — workspace-scoped monthly entries (upsert, toggle-paid, month view).
+     * POST /entries/upsert must be registered BEFORE /:id routes to avoid param capture.
+     */
+    router
+      .group(() => {
+        router
+          .get('entries', [() => import('#modules/entries/entries_controller'), 'index'])
+          .as('entries.index')
+        router
+          .post('entries/upsert', [() => import('#modules/entries/entries_controller'), 'upsert'])
+          .as('entries.upsert')
+        router
+          .post('entries/:id/toggle-paid', [
+            () => import('#modules/entries/entries_controller'),
+            'togglePaid',
+          ])
+          .as('entries.togglePaid')
+        router
+          .patch('entries/:id', [() => import('#modules/entries/entries_controller'), 'update'])
+          .as('entries.update')
+      })
+      .use([middleware.auth(), middleware.currentWorkspace()])
+
+    /**
      * Protected auth routes (valid bearer token required).
      * currentWorkspace is applied per-route — only `me` needs the workspace,
      * so `logout` is spared the extra query. Resource groups (Tasks 8-11)
