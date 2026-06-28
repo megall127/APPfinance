@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState } from 'react'
 import { Upload, FileSpreadsheet, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -51,36 +51,28 @@ function Dropzone({ onFile, disabled }: DropzoneProps) {
     onFile(file)
   }
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  function handleDragOver(e: React.DragEvent) {
     e.preventDefault()
     setDragOver(true)
-  }, [])
+  }
 
-  const handleDragLeave = useCallback(() => {
+  function handleDragLeave() {
     setDragOver(false)
-  }, [])
+  }
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      setDragOver(false)
-      const file = e.dataTransfer.files[0]
-      if (file) handleFile(file)
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) handleFile(file)
+  }
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      if (file) handleFile(file)
-      // Reset input so the same file can be re-selected after a reset
-      e.target.value = ''
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) handleFile(file)
+    // Reset input so the same file can be re-selected after a reset
+    e.target.value = ''
+  }
 
   return (
     <div className="space-y-3">
@@ -209,19 +201,25 @@ function PreviewTable({ years, isLoading }: PreviewTableProps) {
   )
 }
 
-function SuccessBanner() {
+interface SuccessBannerProps {
+  onReset: () => void
+}
+
+function SuccessBanner({ onReset }: SuccessBannerProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
-      <CheckCircle2 className="h-14 w-14 text-green-500" />
+      <CheckCircle2 className="h-14 w-14 text-primary" />
       <div>
         <p className="text-lg font-semibold text-foreground">
           Planilha importada!
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          Os dados foram processados com sucesso. Selecione um novo arquivo
-          para importar novamente.
+          Os dados foram processados com sucesso.
         </p>
       </div>
+      <Button type="button" onClick={onReset} className="min-w-[200px]">
+        Importar outra planilha
+      </Button>
     </div>
   )
 }
@@ -250,6 +248,13 @@ export default function ImportarPage() {
     commit.reset()
   }
 
+  function handleReset() {
+    setCommitted(false)
+    setFile(null)
+    preview.reset()
+    commit.reset()
+  }
+
   function handleCommit() {
     if (!file) return
     commit.mutate(file, {
@@ -257,6 +262,7 @@ export default function ImportarPage() {
         setCommitted(true)
         setFile(null)
         preview.reset()
+        commit.reset()
       },
     })
   }
@@ -288,18 +294,19 @@ export default function ImportarPage() {
             para cada ano presente no arquivo.
           </p>
           <p>
-            A operação e <span className="font-medium text-foreground">idempotente</span> — pode
-            ser executada mais de uma vez com segurança sem duplicar dados.
+            A operação é{' '}
+            <span className="font-medium text-foreground">idempotente</span> —
+            pode ser executada mais de uma vez com segurança sem duplicar dados.
           </p>
           <p>
-            Receitas recorrentes e assinaturas de cartao sao preenchidas
+            Receitas recorrentes e assinaturas de cartão são preenchidas
             automaticamente para o ano mais recente.
           </p>
         </CardContent>
       </Card>
 
       {/* ── Success banner after commit ── */}
-      {committed && <SuccessBanner />}
+      {committed && <SuccessBanner onReset={handleReset} />}
 
       {/* ── Dropzone ── */}
       {!committed && (
