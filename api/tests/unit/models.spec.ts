@@ -52,3 +52,35 @@ test.group('Models – relations wired', () => {
     assert.isDefined(User.$getRelation('workspaces'))
   })
 })
+
+test.group('Models – relation types', () => {
+  test('Workspace.owner is a belongsTo, items/categories are hasMany', ({ assert }) => {
+    assert.equal(Workspace.$getRelation('owner').type, 'belongsTo')
+    assert.equal(Workspace.$getRelation('items').type, 'hasMany')
+    assert.equal(Workspace.$getRelation('categories').type, 'hasMany')
+  })
+
+  test('User.workspaces is a hasMany', ({ assert }) => {
+    assert.equal(User.$getRelation('workspaces').type, 'hasMany')
+  })
+})
+
+test.group('Models – foreignKey on owner/workspaces', () => {
+  /**
+   * Lucid resolves a relation's `foreignKey` lazily inside `.boot()`, so the
+   * relation MUST be booted before the property is populated (it is `undefined`
+   * beforehand). We assert on the real `.foreignKey` so the test genuinely
+   * fails if the `foreignKey: 'ownerUserId'` option is dropped or misspelled.
+   */
+  test('Workspace.owner foreignKey is ownerUserId', ({ assert }) => {
+    const rel = Workspace.$getRelation('owner')
+    rel.boot()
+    assert.equal(rel.foreignKey, 'ownerUserId')
+  })
+
+  test('User.workspaces foreignKey is ownerUserId', ({ assert }) => {
+    const rel = User.$getRelation('workspaces')
+    rel.boot()
+    assert.equal(rel.foreignKey, 'ownerUserId')
+  })
+})
