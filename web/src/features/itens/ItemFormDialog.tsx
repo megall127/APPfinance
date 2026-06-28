@@ -96,7 +96,11 @@ export function ItemFormDialog({
         name: item?.name ?? '',
         kind: item?.kind ?? defaultKind,
         categoryId: item?.categoryId ?? '__none__',
-        defaultAmount: item?.defaultAmount ?? '',
+        // API returns dot-decimal ("264.60"); pre-fill in BR comma format so
+        // the value round-trips through parseAmountInput on submit.
+        defaultAmount: item?.defaultAmount
+          ? Number(item.defaultAmount).toFixed(2).replace('.', ',')
+          : '',
       })
     }
   }, [open, item, defaultKind, reset])
