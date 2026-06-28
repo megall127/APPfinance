@@ -127,7 +127,7 @@ export function useRegister() {
         user: data.user,
         workspace: data.workspace,
       })
-      toast.success('Bem-vindo!')
+      toast.success('Conta criada com sucesso!')
       navigate('/')
     },
   })

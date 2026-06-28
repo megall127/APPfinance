@@ -106,7 +106,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Highlight card */}
-          <div className="rounded-2xl bg-white/60 border border-primary/20 backdrop-blur-sm p-6 space-y-4 shadow-sm">
+          <div className="rounded-2xl bg-surface/60 border border-primary/20 backdrop-blur-sm p-6 space-y-4 shadow-sm">
             <div className="flex items-center gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
                 <Sparkles className="h-4 w-4 text-primary" />
