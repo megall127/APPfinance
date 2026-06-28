@@ -16,6 +16,13 @@ export async function registerAndAuth(client: ApiClient, email: string) {
 
   const body = response.body()
 
+  // Fail loudly at the helper boundary if the register response is malformed,
+  // so downstream tests (Tasks 9-12) get a readable error instead of a cryptic
+  // `undefined.x` later on.
+  if (!body?.token?.value || !body?.workspace?.id || !body?.user?.id) {
+    throw new Error(`registerAndAuth: unexpected register response: ${JSON.stringify(body)}`)
+  }
+
   return {
     token: body.token.value as string,
     workspace: body.workspace as { id: number; name: string },

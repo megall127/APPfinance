@@ -1,5 +1,6 @@
 import { test } from '@japa/runner'
 import testUtils from '@adonisjs/core/services/test_utils'
+import Item from '#models/item'
 import { registerAndAuth } from './helpers.js'
 
 test.group('Categories CRUD', (group) => {
@@ -142,5 +143,85 @@ test.group('Categories CRUD', (group) => {
       .json({ name: 'Bad Color', color: 'notahex' })
 
     res.assertStatus(422)
+  })
+
+  /**
+   * Validator: empty name is rejected with 422.
+   */
+  test('POST /api/v1/categories with empty name → 422', async ({ client }) => {
+    const { token } = await registerAndAuth(client, 'catemptyname@test.com')
+
+    const res = await client.post('/api/v1/categories').bearerToken(token).json({ name: '' })
+
+    res.assertStatus(422)
+  })
+
+  /**
+   * DELETE on a category that HAS items archives it (soft delete) instead of
+   * removing the row — the distinctive half of the DELETE contract.
+   */
+  test('DELETE /api/v1/categories/:id archives category when items are linked', async ({
+    client,
+    assert,
+  }) => {
+    const { token, workspace } = await registerAndAuth(client, 'catarchive@test.com')
+
+    const created = await client
+      .post('/api/v1/categories')
+      .bearerToken(token)
+      .json({ name: 'Has Items' })
+
+    created.assertStatus(201)
+    const categoryId = created.body().id
+
+    // The items endpoint does not exist yet (Task 9), so create the linked
+    // Item directly through the model.
+    await Item.create({
+      workspaceId: Number(workspace.id),
+      categoryId: Number(categoryId),
+      name: 'Linked Item',
+      kind: 'expense',
+    })
+
+    const del = await client.delete(`/api/v1/categories/${categoryId}`).bearerToken(token)
+    del.assertStatus(200)
+    assert.deepEqual(del.body(), { archived: true, deleted: false })
+
+    // Category is archived, not removed — it must STILL appear in the list.
+    const list = await client.get('/api/v1/categories').bearerToken(token)
+    const ids = (list.body() as Array<{ id: number }>).map((c) => Number(c.id))
+    assert.include(ids, Number(categoryId))
+
+    const stillThere = (list.body() as Array<{ id: number; archived: boolean | number }>).find(
+      (c) => Number(c.id) === Number(categoryId)
+    )
+    // SQLite serializes booleans as 0/1, so compare truthiness rather than === true.
+    assert.isOk(stillThere?.archived)
+  })
+
+  /**
+   * GET /api/v1/categories returns categories in ascending sortOrder.
+   */
+  test('GET /api/v1/categories returns categories ordered by sortOrder asc', async ({
+    client,
+    assert,
+  }) => {
+    const { token } = await registerAndAuth(client, 'catorder@test.com')
+
+    await client
+      .post('/api/v1/categories')
+      .bearerToken(token)
+      .json({ name: 'Later', sortOrder: 200 })
+    await client
+      .post('/api/v1/categories')
+      .bearerToken(token)
+      .json({ name: 'Earlier', sortOrder: 100 })
+
+    const list = await client.get('/api/v1/categories').bearerToken(token)
+    list.assertStatus(200)
+
+    const orders = (list.body() as Array<{ sortOrder: number }>).map((c) => c.sortOrder)
+    const sorted = [...orders].sort((a, b) => a - b)
+    assert.deepEqual(orders, sorted)
   })
 })

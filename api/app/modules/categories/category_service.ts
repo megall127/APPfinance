@@ -76,7 +76,10 @@ export default class CategoryService {
       .where('id', id)
       .firstOrFail()
 
-    const linkedItem = await Item.query().where('category_id', id).first()
+    const linkedItem = await Item.query()
+      .where('category_id', id)
+      .where('workspace_id', workspaceId)
+      .first()
 
     if (linkedItem !== null) {
       category.archived = true
