@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+/* ── Tailwind v4: expose CSS variables as Tailwind color utilities ────────── */
+@theme inline {
+  /* shadcn semantic → Tailwind utility colors */
+  --color-background:            var(--background);
+  --color-foreground:            var(--foreground);
+  --color-card:                  var(--card);
+  --color-card-foreground:       var(--card-foreground);
+  --color-popover:               var(--popover);
+  --color-popover-foreground:    var(--popover-foreground);
+  --color-primary:               var(--primary);
+  --color-primary-foreground:    var(--primary-foreground);
+  --color-secondary:             var(--secondary);
+  --color-secondary-foreground:  var(--secondary-foreground);
+  --color-muted:                 var(--muted);
+  --color-muted-foreground:      var(--muted-foreground);
+  --color-accent:                var(--accent);
+  --color-accent-foreground:     var(--accent-foreground);
+  --color-destructive:           var(--destructive);
+  --color-destructive-foreground:var(--destructive-foreground);
+  --color-border:                var(--border);
+  --color-input:                 var(--input);
+  --color-ring:                  var(--ring);
+
+  /* Lefinance brand aliases */
+  --color-bg:                    var(--bg);
+  --color-surface:               var(--surface);
+  --color-primary-strong:        var(--primary-strong);
+  --color-danger:                var(--danger);
+  --color-text:                  var(--text-color);
+
+  /* Border radius scale */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Font */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Lefinance design tokens ─────────────────────────────────────────────── */
+:root {
+  /* ── Lefinance brand palette ── */
+  --bg:             #FBFDFB;
+  --surface:        #FFFFFF;
+  --primary-strong: #2E8B63;
+  --text-color:     #1F2937;
+  --danger:         #E5534B;
+
+  /* ── shadcn semantic variables (mapped to our palette) ── */
+  --background:              #FBFDFB;
+  --foreground:              #1F2937;
+  --card:                    #FFFFFF;
+  --card-foreground:         #1F2937;
+  --popover:                 #FFFFFF;
+  --popover-foreground:      #1F2937;
+  --primary:                 #4CAF82;
+  --primary-foreground:      #FFFFFF;
+  --secondary:               #F5C84C;
+  --secondary-foreground:    #1F2937;
+  --muted:                   #F3F4F6;
+  --muted-foreground:        #6B7280;
+  --accent:                  #F5C84C;
+  --accent-foreground:       #1F2937;
+  --destructive:             #E5534B;
+  --destructive-foreground:  #FFFFFF;
+  --border:                  #E5E7EB;
+  --input:                   #E5E7EB;
+  --ring:                    #4CAF82;
+  --radius:                  0.75rem;
+}
+
+/* ── Base styles ─────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+  }
+  #root {
+    min-height: 100vh;
+  }
+}
