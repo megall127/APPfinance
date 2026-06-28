@@ -161,9 +161,11 @@ test.group('Dashboard', (group) => {
     assert.isArray(body.breakdownPorCategoria)
 
     const casaBreakdown = body.breakdownPorCategoria.find(
-      (b: { categoryId: number }) => Number(b.categoryId) === Number(cat.id)
+      (b: { categoryId: number }) => b.categoryId === cat.id
     )
     assert.exists(casaBreakdown, 'breakdown must include category "Casa"')
+    assert.isNumber(casaBreakdown.categoryId, 'categoryId must be a number, not a string')
+    assert.strictEqual(casaBreakdown.categoryId, cat.id)
     assert.equal(casaBreakdown.name, 'Casa')
     assert.equal(casaBreakdown.color, '#ff0000')
     assert.equal(casaBreakdown.total, 230)
@@ -251,6 +253,7 @@ test.group('Dashboard', (group) => {
     assert.equal(body.jaPago, 0)
     assert.equal(body.receitas, 0)
     assert.equal(body.assinaturasCartao, 0)
+    assert.strictEqual(body.percentualPago, 0, 'zero-guard must return 0, not NaN')
 
     // Yearly cross-workspace check
     const yearly = await client

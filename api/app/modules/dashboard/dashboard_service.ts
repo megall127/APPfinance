@@ -65,7 +65,7 @@ export default class DashboardService {
       saldo,
       assinaturasCartao,
       breakdownPorCategoria: breakdown.map((b) => ({
-        categoryId: b.categoryId,
+        categoryId: b.categoryId !== null ? Number(b.categoryId) : null,
         name: b.name,
         color: b.color,
         total: Number(b.total),

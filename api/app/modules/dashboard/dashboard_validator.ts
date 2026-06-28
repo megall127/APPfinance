@@ -5,7 +5,7 @@ import vine from '@vinejs/vine'
  */
 export const monthSummaryQueryValidator = vine.compile(
   vine.object({
-    year: vine.number().withoutDecimals(),
+    year: vine.number().withoutDecimals().min(2000).max(2100),
     month: vine.number().withoutDecimals().min(1).max(12),
   })
 )
@@ -15,6 +15,6 @@ export const monthSummaryQueryValidator = vine.compile(
  */
 export const yearlyQueryValidator = vine.compile(
   vine.object({
-    year: vine.number().withoutDecimals(),
+    year: vine.number().withoutDecimals().min(2000).max(2100),
   })
 )
