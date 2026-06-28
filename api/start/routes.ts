@@ -43,6 +43,6 @@ router
           .as('auth.logout')
       })
       .prefix('auth')
-      .use(middleware.auth())
+      .use([middleware.auth(), middleware.currentWorkspace()])
   })
   .prefix('/api/v1')

@@ -56,11 +56,11 @@ export default class AuthController {
 
   /**
    * GET /api/v1/auth/me  [auth-protected]
-   * Returns the authenticated user and their workspace
+   * Returns the authenticated user and their workspace.
+   * `ctx.workspace` is injected by CurrentWorkspaceMiddleware upstream.
    */
-  async me({ auth }: HttpContext) {
+  async me({ auth, workspace }: HttpContext) {
     const user = auth.getUserOrFail()
-    const workspace = await this.#workspaceFor(user)
 
     return {
       user: user.serialize(),
