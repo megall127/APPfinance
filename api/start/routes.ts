@@ -31,18 +31,22 @@ router
       .prefix('auth')
 
     /**
-     * Protected auth routes (valid bearer token required)
+     * Protected auth routes (valid bearer token required).
+     * currentWorkspace is applied per-route — only `me` needs the workspace,
+     * so `logout` is spared the extra query. Resource groups (Tasks 8-11)
+     * will apply [auth, currentWorkspace] at the group level instead.
      */
     router
       .group(() => {
         router
           .get('me', [() => import('#modules/auth/auth_controller'), 'me'])
           .as('auth.me')
+          .use([middleware.auth(), middleware.currentWorkspace()])
         router
           .post('logout', [() => import('#modules/auth/auth_controller'), 'logout'])
           .as('auth.logout')
+          .use(middleware.auth())
       })
       .prefix('auth')
-      .use([middleware.auth(), middleware.currentWorkspace()])
   })
   .prefix('/api/v1')
