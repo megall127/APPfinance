@@ -13,17 +13,7 @@ import {
 } from 'recharts'
 import type { TooltipContentProps } from 'recharts'
 import type { YearHistory } from './useHistory'
-
-// ── Palette ────────────────────────────────────────────────────────────────────
-
-const YEAR_COLORS = [
-  '#6366f1', // indigo
-  '#f59e0b', // amber
-  '#10b981', // emerald
-  '#ef4444', // red
-  '#8b5cf6', // violet
-  '#06b6d4', // cyan
-]
+import { seriesColor } from './colors'
 
 // ── Compact BRL for Y-axis ─────────────────────────────────────────────────────
 
@@ -166,21 +156,25 @@ export function YearCompareChart({
                   <span className="text-xs text-foreground">{value}</span>
                 )}
               />
-              {selectedYears.map((year, i) => (
-                <Line
-                  key={year}
-                  type="monotone"
-                  dataKey={String(year)}
-                  name={String(year)}
-                  stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{
-                    r: 4,
-                    fill: YEAR_COLORS[i % YEAR_COLORS.length],
-                  }}
-                />
-              ))}
+              {selectedYears.map((year, i) => {
+                // Skip a misleading flat-zero line for a year whose request
+                // failed. A still-loading year (isError === false) is kept.
+                const yd = yearData.find((d) => d.year === year)
+                if (yd?.isError) return null
+                const color = seriesColor(i)
+                return (
+                  <Line
+                    key={year}
+                    type="monotone"
+                    dataKey={String(year)}
+                    name={String(year)}
+                    stroke={color}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, fill: color }}
+                  />
+                )
+              })}
             </LineChart>
           </ResponsiveContainer>
         )}

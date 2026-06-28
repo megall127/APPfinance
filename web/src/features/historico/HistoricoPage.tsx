@@ -6,6 +6,7 @@ import { formatBRL } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useHistory } from './useHistory'
 import { YearCompareChart } from './YearCompareChart'
+import { seriesColor } from './colors'
 
 // ── Year range ─────────────────────────────────────────────────────────────────
 
@@ -16,16 +17,6 @@ const YEAR_RANGE: number[] = Array.from(
   { length: 4 },
   (_, i) => CURRENT_YEAR - 3 + i,
 )
-
-/** Color palette for summary cards — mirrors YearCompareChart palette. */
-const SUMMARY_COLORS = [
-  '#6366f1',
-  '#f59e0b',
-  '#10b981',
-  '#ef4444',
-  '#8b5cf6',
-  '#06b6d4',
-]
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
@@ -92,7 +83,7 @@ export default function HistoricoPage() {
               (sum, m) => sum + m.total,
               0,
             )
-            const color = SUMMARY_COLORS[i % SUMMARY_COLORS.length]
+            const color = seriesColor(i)
             return (
               <Card
                 key={yd.year}
@@ -106,6 +97,10 @@ export default function HistoricoPage() {
                 <CardContent className="px-4 pb-4">
                   {yd.isLoading ? (
                     <Skeleton className="h-7 w-32" />
+                  ) : yd.isError ? (
+                    <p className="text-sm text-destructive">
+                      Erro ao carregar
+                    </p>
                   ) : (
                     <p
                       className="text-xl font-bold"
