@@ -46,6 +46,18 @@ export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
 }
 
 /**
+ * Directories to exclude when scanning for test files.
+ *
+ * @japa/runner forwards this to Node's experimental `fs.glob`. On Node 22.x
+ * that API only accepts `exclude` as a *function* (array-of-globs support
+ * landed in Node 24), so the runner's default string-array form throws.
+ * We provide the function form to stay compatible on Node 22. The cast is
+ * required because @japa/runner still types `exclude` as `string[]`.
+ */
+export const exclude = ((filePath: string) =>
+  /(?:^|[\\/])(?:node_modules|\.git|coverage)(?:[\\/]|$)/.test(filePath)) as unknown as Config['exclude']
+
+/**
  * Configure suites by tapping into the test suite instance.
  * Learn more - https://japa.dev/docs/test-suites#lifecycle-hooks
  */

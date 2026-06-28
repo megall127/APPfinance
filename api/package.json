@@ -10,9 +10,10 @@
   },
   "scripts": {
     "start": "node bin/server.js",
-    "build": "node ace build",
-    "dev": "node ace serve --hmr",
-    "test": "node ace test",
+    "build": "cross-env NODE_OPTIONS=--experimental-transform-types node ace build",
+    "dev": "cross-env NODE_OPTIONS=--experimental-transform-types node ace serve --hmr",
+    "test": "cross-env NODE_OPTIONS=--experimental-transform-types node ace test",
+    "ace": "cross-env NODE_OPTIONS=--experimental-transform-types node ace",
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit"
@@ -48,6 +49,7 @@
     "@poppinss/ts-exec": "^1.4.4",
     "@types/luxon": "^3.7.1",
     "@types/node": "~25.9.1",
+    "cross-env": "^10.1.0",
     "eslint": "^10.4.0",
     "hot-hook": "^1.0.0",
     "pino-pretty": "^13.1.3",
