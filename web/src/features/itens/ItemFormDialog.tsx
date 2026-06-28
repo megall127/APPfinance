@@ -57,6 +57,8 @@ interface ItemFormDialogProps {
   onOpenChange: (open: boolean) => void
   item?: Item
   defaultKind?: ItemKind
+  /** When true, replaces the kind <Select> with a read-only display. */
+  lockKind?: boolean
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -66,6 +68,7 @@ export function ItemFormDialog({
   onOpenChange,
   item,
   defaultKind = 'expense',
+  lockKind = false,
 }: ItemFormDialogProps) {
   const isEdit = !!item
   const create = useCreateItem()
@@ -166,23 +169,32 @@ export function ItemFormDialog({
           {/* Kind */}
           <div className="space-y-1.5">
             <Label>Tipo *</Label>
-            <Select
-              value={selectedKind}
-              onValueChange={(v) => setValue('kind', v as ItemKind)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(
-                  ['income', 'expense', 'card_subscription'] as ItemKind[]
-                ).map((k) => (
-                  <SelectItem key={k} value={k}>
-                    {KIND_LABELS[k]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {lockKind ? (
+              <Input
+                readOnly
+                disabled
+                value={KIND_LABELS[selectedKind]}
+                className="cursor-default"
+              />
+            ) : (
+              <Select
+                value={selectedKind}
+                onValueChange={(v) => setValue('kind', v as ItemKind)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(
+                    ['income', 'expense', 'card_subscription'] as ItemKind[]
+                  ).map((k) => (
+                    <SelectItem key={k} value={k}>
+                      {KIND_LABELS[k]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {errors.kind?.message && (
               <p className="text-xs text-destructive">{errors.kind.message}</p>
             )}
