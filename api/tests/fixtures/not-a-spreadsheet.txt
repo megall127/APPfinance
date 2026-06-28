@@ -1,0 +1,2 @@
+This is a plain text file, not an .xlsx spreadsheet.
+Used to assert the import endpoints reject non-xlsx uploads with 422.

@@ -57,6 +57,19 @@ function norm(value: string): string {
   return value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
+/**
+ * Synthesize 12 pending monthly entries (months 1..12) at a fixed base amount.
+ * Used for recurring income / card subscriptions, which carry a single base value
+ * in the sheet but should pre-fill the whole latest year so the dashboard reflects them.
+ */
+function monthlyEntries(amount: number): ParsedEntry[] {
+  return Array.from({ length: 12 }, (_, i) => ({
+    month: i + 1,
+    amount,
+    status: 'pending' as const,
+  }))
+}
+
 /** Map a Portuguese month abbreviation (Jan, Fev, ...) to 1..12, or null. */
 function monthOf(text: string): number | null {
   const key = text.trim().toLowerCase().slice(0, 3)
@@ -202,7 +215,7 @@ function parseIncome(sheet: ExcelJS.Worksheet): ParsedItem[] {
         kind: 'income',
         categoryHint: categoryHintFor(name),
         defaultAmount: base ?? undefined,
-        entries: [],
+        entries: base !== null ? monthlyEntries(base) : [],
       })
     }
     break
@@ -271,7 +284,8 @@ function parseCardSubscriptions(sheet: ExcelJS.Worksheet): ParsedItem[] {
     for (let c = 1; c <= sheet.columnCount; c++) {
       const here = norm(cellText(sheet.getRow(r).getCell(c)))
       if (here !== CARD_TITLE) continue
-      if (norm(cellText(sheet.getRow(r).getCell(c - 1))) === CARD_TITLE) continue
+      // Skip the merged continuation of the (two-column) title so values aren't read as names.
+      if (c > 1 && norm(cellText(sheet.getRow(r).getCell(c - 1))) === CARD_TITLE) continue
 
       for (let ir = r + 1; ir <= rows; ir++) {
         const name = cellText(sheet.getRow(ir).getCell(c)).trim()
@@ -285,7 +299,7 @@ function parseCardSubscriptions(sheet: ExcelJS.Worksheet): ParsedItem[] {
           kind: 'card_subscription',
           categoryHint: categoryHintFor(name),
           defaultAmount: value ?? undefined,
-          entries: [],
+          entries: value !== null ? monthlyEntries(value) : [],
         })
       }
     }
@@ -306,8 +320,8 @@ export async function parseWorkbook(source: Buffer | string): Promise<ParsedWork
   if (typeof source === 'string') {
     await wb.xlsx.readFile(source)
   } else {
-    // Bridge the @types/node generic Buffer<TArrayBuffer> vs ExcelJS's plain
-    // Buffer parameter typing (runtime accepts a Node Buffer either way).
+    // ExcelJS's load() param predates @types/node's generic Buffer<TArrayBuffer>;
+    // a localized cast bridges the two (runtime accepts a Node Buffer either way).
     await wb.xlsx.load(source as unknown as Parameters<typeof wb.xlsx.load>[0])
   }
 
@@ -325,10 +339,13 @@ export async function parseWorkbook(source: Buffer | string): Promise<ParsedWork
     yearsMap.get(latest)!.items.push(...income, ...cards)
   }
 
-  // Apply 2026 paid/pending status by matching item name.
+  // Apply 2026 paid/pending status by matching item name. Only real expenses
+  // carry a Pago/Pendente status; synthesized income/subscription entries stay
+  // pending (and would otherwise be cross-matched by name, e.g. card "Celular").
   const y2026 = yearsMap.get(2026)
   if (y2026) {
     for (const item of y2026.items) {
+      if (item.kind !== 'expense') continue
       const paidMonths = paidByName.get(norm(item.name))
       for (const entry of item.entries) {
         entry.status = paidMonths?.has(entry.month) ? 'paid' : 'pending'

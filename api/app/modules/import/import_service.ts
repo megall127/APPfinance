@@ -73,7 +73,12 @@ export default class ImportService {
                 workspaceId,
                 amount: entry.amount.toFixed(2),
                 status: entry.status,
-                paidAt: entry.status === 'paid' ? DateTime.now() : null,
+                // Deterministic + idempotent: first day of the entry's own month
+                // (not now()), so re-imports never reset it. Keeps paid ⟹ paidAt≠null.
+                paidAt:
+                  entry.status === 'paid'
+                    ? DateTime.fromObject({ year: year.year, month: entry.month, day: 1 })
+                    : null,
               },
               { client: trx }
             )
