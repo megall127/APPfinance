@@ -2,12 +2,56 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      manifest: {
+        name: 'Lefinance',
+        short_name: 'Lefinance',
+        description: 'Controle de contas mensais e finanças pessoais',
+        theme_color: '#4CAF82',
+        background_color: '#FBFDFB',
+        display: 'standalone',
+        start_url: '/',
+        lang: 'pt-BR',
+        icons: [
+          {
+            src: '/pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/maskable-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        // Precache the Vite build assets (JS, CSS, HTML).
+        // Do NOT aggressively cache API calls — the API lives on a separate origin.
+        // Goal for v1: installable, not full offline.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+        navigateFallback: 'index.html',
+        // Exclude any /api routes from precaching (separate origin anyway)
+        navigateFallbackDenylist: [/^\/api\//],
+      },
+    }),
   ],
   resolve: {
     alias: {
