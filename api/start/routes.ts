@@ -59,6 +59,27 @@ router
       .use([middleware.auth(), middleware.currentWorkspace()])
 
     /**
+     * Items resource — workspace-scoped CRUD with kind filter.
+     * Supports kind=income|expense|card_subscription query filter on GET.
+     */
+    router
+      .group(() => {
+        router
+          .get('items', [() => import('#modules/items/items_controller'), 'index'])
+          .as('items.index')
+        router
+          .post('items', [() => import('#modules/items/items_controller'), 'store'])
+          .as('items.store')
+        router
+          .patch('items/:id', [() => import('#modules/items/items_controller'), 'update'])
+          .as('items.update')
+        router
+          .delete('items/:id', [() => import('#modules/items/items_controller'), 'destroy'])
+          .as('items.destroy')
+      })
+      .use([middleware.auth(), middleware.currentWorkspace()])
+
+    /**
      * Protected auth routes (valid bearer token required).
      * currentWorkspace is applied per-route — only `me` needs the workspace,
      * so `logout` is spared the extra query. Resource groups (Tasks 8-11)
