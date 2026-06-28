@@ -175,7 +175,7 @@ export default function AssinaturasPage() {
     if (!items) return 0
     return items
       .filter((it) => Boolean(it.isActive))
-      .reduce((acc, it) => acc + (it.defaultAmount ? Number(it.defaultAmount) : 0), 0)
+      .reduce((acc, it) => acc + (Number.isFinite(Number(it.defaultAmount)) ? Number(it.defaultAmount) : 0), 0)
   }, [items])
 
   function handleAdd() {
@@ -238,6 +238,8 @@ export default function AssinaturasPage() {
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-8 w-36" />
+          ) : isError ? (
+            <p className="text-3xl font-bold text-muted-foreground tabular-nums">—</p>
           ) : (
             <>
               <p className="text-3xl font-bold text-primary tabular-nums">
