@@ -98,7 +98,9 @@ export function ItemFormDialog({
       reset({
         name: item?.name ?? '',
         kind: item?.kind ?? defaultKind,
-        categoryId: item?.categoryId ?? '__none__',
+        // Radix Select is string-based; category ids arrive as numbers at
+        // runtime, so coerce to string for the control to match SelectItem values.
+        categoryId: item?.categoryId != null ? String(item.categoryId) : '__none__',
         // API returns dot-decimal ("264.60"); pre-fill in BR comma format so
         // the value round-trips through parseAmountInput on submit.
         defaultAmount: item?.defaultAmount
@@ -215,7 +217,7 @@ export function ItemFormDialog({
                   <span className="text-muted-foreground">Sem categoria</span>
                 </SelectItem>
                 {(categories ?? []).map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
+                  <SelectItem key={cat.id} value={String(cat.id)}>
                     <span className="flex items-center gap-2">
                       <span
                         className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
