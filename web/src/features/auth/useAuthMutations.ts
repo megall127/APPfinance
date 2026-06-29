@@ -8,7 +8,7 @@ import { useSession } from '@/features/auth/session'
 // ── API response shape ────────────────────────────────────────────────────────
 
 interface AuthResponse {
-  user: { id: string; name: string; email: string }
+  user: { id: string; fullName: string | null; email: string }
   token: { type: string; value: string }
   workspace: { id: string; name: string }
 }

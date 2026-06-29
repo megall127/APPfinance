@@ -6,7 +6,8 @@ import { TOKEN_KEY, USER_KEY, WORKSPACE_KEY, clearSession } from '@/lib/constant
 
 export interface SessionUser {
   id: string
-  name: string
+  /** Matches the API user shape (the API serializes `fullName`). */
+  fullName: string | null
   email: string
 }
 
