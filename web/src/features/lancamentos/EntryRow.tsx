@@ -35,7 +35,11 @@ export function EntryRow({ row, year, month }: EntryRowProps) {
 
       {/* Editable amount */}
       <TableCell className="text-right">
-        <EditableAmount entry={entry} onCommit={handleCommit} />
+        <EditableAmount
+          entry={entry}
+          defaultAmount={item.defaultAmount}
+          onCommit={handleCommit}
+        />
       </TableCell>
 
       {/* Status toggle */}

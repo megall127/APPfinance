@@ -12,6 +12,8 @@ export interface EntryItem {
   categoryId: string
   categoryName?: string
   categoryColor?: string
+  /** Item's saved default amount (decimal string) or null — shown as a suggestion in the grid. */
+  defaultAmount?: string | null
 }
 
 export interface Entry {
