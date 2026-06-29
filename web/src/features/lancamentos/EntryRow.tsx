@@ -46,6 +46,7 @@ export function EntryRow({ row, year, month }: EntryRowProps) {
       <TableCell>
         <StatusToggle
           entry={entry}
+          kind={item.kind}
           onToggle={handleToggle}
           isPending={toggleBusy}
         />

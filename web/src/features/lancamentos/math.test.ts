@@ -99,9 +99,11 @@ describe('computeMonthSummary', () => {
     expect(result.total).toBe(150) // 100 + 50 (only expenses with entries)
     expect(result.pago).toBe(100) // only the paid expense
     expect(result.falta).toBe(50) // 150 - 100
+    expect(result.receitas).toBe(999) // the income entry
+    expect(result.saldo).toBe(849) // 999 - 150
   })
 
-  it('counts expense item defaults for rows without an entry (planned amount)', () => {
+  it('counts expense and income item defaults for rows without an entry (planned)', () => {
     const rows: EntryRow[] = [
       // expense with entry (paid) → 100 in total + pago
       row(makeItem('1', 'expense'), makeEntry('1', '100.00', 'paid')),
@@ -109,17 +111,25 @@ describe('computeMonthSummary', () => {
       row(makeItem('2', 'expense', '50.00'), null),
       // expense, no entry, no default → excluded
       row(makeItem('3', 'expense'), null),
-      // income with default + no entry → excluded (not an expense)
+      // income, no entry, has default 9999 → counts toward receitas (planned)
       row(makeItem('4', 'income', '9999.00'), null),
     ]
     const result = computeMonthSummary(rows)
-    expect(result.total).toBe(150) // 100 entry + 50 default
+    expect(result.total).toBe(150) // 100 entry + 50 default expense
     expect(result.pago).toBe(100) // only the paid entry
     expect(result.falta).toBe(50) // 150 - 100 (the planned default is unpaid)
+    expect(result.receitas).toBe(9999) // the planned income default
+    expect(result.saldo).toBe(9849) // 9999 - 150
   })
 
   it('returns zeros for an empty list', () => {
-    expect(computeMonthSummary([])).toEqual({ total: 0, pago: 0, falta: 0 })
+    expect(computeMonthSummary([])).toEqual({
+      total: 0,
+      pago: 0,
+      falta: 0,
+      receitas: 0,
+      saldo: 0,
+    })
   })
 
   it('falta equals total when nothing is paid', () => {

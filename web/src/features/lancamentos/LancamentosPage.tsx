@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 import type { EntryRow as EntryRowData } from './useEntries'
 
 // ── Footer summary ────────────────────────────────────────────────────────────
@@ -24,13 +25,17 @@ interface SummaryFooterProps {
 }
 
 function SummaryFooter({ rows }: SummaryFooterProps) {
-  const { total, pago, falta } = useMemo(
+  const { total, pago, falta, receitas, saldo } = useMemo(
     () => computeMonthSummary(rows),
     [rows],
   )
 
   return (
-    <div className="mt-4 flex flex-wrap gap-4 justify-end text-sm">
+    <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3 justify-end text-sm">
+      <div className="flex flex-col items-end">
+        <span className="text-muted-foreground">Receitas</span>
+        <span className="font-semibold tabular-nums">{formatBRL(receitas)}</span>
+      </div>
       <div className="flex flex-col items-end">
         <span className="text-muted-foreground">Total do mês</span>
         <span className="font-semibold tabular-nums">{formatBRL(total)}</span>
@@ -45,6 +50,19 @@ function SummaryFooter({ rows }: SummaryFooterProps) {
         <span className="text-yellow-700 dark:text-yellow-400">Falta pagar</span>
         <span className="font-semibold tabular-nums text-yellow-700 dark:text-yellow-400">
           {formatBRL(falta)}
+        </span>
+      </div>
+      <div className="flex flex-col items-end border-l border-border pl-6">
+        <span className="text-muted-foreground">Saldo</span>
+        <span
+          className={cn(
+            'font-semibold tabular-nums',
+            saldo >= 0
+              ? 'text-green-700 dark:text-green-400'
+              : 'text-destructive',
+          )}
+        >
+          {formatBRL(saldo)}
         </span>
       </div>
     </div>

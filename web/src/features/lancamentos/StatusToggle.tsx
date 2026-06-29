@@ -1,18 +1,25 @@
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import type { Entry } from './useEntries'
+import type { Entry, ItemKind } from './useEntries'
 
 interface StatusToggleProps {
   entry: Entry | null
+  /** Item kind — income uses "A receber/Recebido" instead of "Pendente/Pago". */
+  kind: ItemKind
   onToggle: () => void
   isPending?: boolean
 }
 
 /**
- * Clickable badge showing Pago (green) or Pendente (yellow).
+ * Clickable badge showing the payment status.
+ * - expense / card: Pendente (yellow) ↔ Pago (green)
+ * - income:         A receber (yellow) ↔ Recebido (green)
  * Disabled / hidden when there is no entry (amount never set).
  */
-export function StatusToggle({ entry, onToggle, isPending = false }: StatusToggleProps) {
+export function StatusToggle({ entry, kind, onToggle, isPending = false }: StatusToggleProps) {
+  const isIncome = kind === 'income'
+  const paidLabel = isIncome ? 'Recebido' : 'Pago'
+  const pendingLabel = isIncome ? 'A receber' : 'Pendente'
   // No entry means no amount has been set yet → can't toggle
   if (!entry) {
     return (
@@ -36,7 +43,11 @@ export function StatusToggle({ entry, onToggle, isPending = false }: StatusToggl
         'rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         isPending && 'opacity-60 cursor-wait'
       )}
-      aria-label={isPaid ? 'Marcar como pendente' : 'Marcar como pago'}
+      aria-label={
+        isPaid
+          ? `Marcar como ${pendingLabel.toLowerCase()}`
+          : `Marcar como ${paidLabel.toLowerCase()}`
+      }
     >
       <Badge
         className={cn(
@@ -47,7 +58,7 @@ export function StatusToggle({ entry, onToggle, isPending = false }: StatusToggl
         )}
         variant="outline"
       >
-        {isPaid ? 'Pago' : 'Pendente'}
+        {isPaid ? paidLabel : pendingLabel}
       </Badge>
     </button>
   )
