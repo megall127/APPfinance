@@ -14,6 +14,9 @@ export interface EntryItem {
   categoryColor?: string
   /** Item's saved default amount (decimal string) or null — shown as a suggestion in the grid. */
   defaultAmount?: string | null
+  /** Installment fields (when the item is parcelado): total and how many already paid. */
+  installmentsTotal?: number | null
+  installmentsPaid?: number | null
 }
 
 export interface Entry {

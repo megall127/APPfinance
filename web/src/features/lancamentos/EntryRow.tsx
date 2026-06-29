@@ -1,4 +1,5 @@
 import { TableCell, TableRow } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
 import { EditableAmount } from './EditableAmount'
 import { StatusToggle } from './StatusToggle'
 import type { EntryRow as EntryRowData } from './useEntries'
@@ -30,8 +31,21 @@ export function EntryRow({ row, year, month }: EntryRowProps) {
 
   return (
     <TableRow>
-      {/* Item name */}
-      <TableCell className="font-medium">{item.name}</TableCell>
+      {/* Item name (+ installment progress when parcelado) */}
+      <TableCell className="font-medium">
+        <span className="flex items-center gap-2">
+          {item.name}
+          {item.installmentsTotal != null && (
+            <Badge
+              variant="outline"
+              className="text-[10px] font-normal text-muted-foreground px-1.5 py-0"
+              title={`Parcela ${item.installmentsPaid ?? 0} de ${item.installmentsTotal}`}
+            >
+              {item.installmentsPaid ?? 0}/{item.installmentsTotal}
+            </Badge>
+          )}
+        </span>
+      </TableCell>
 
       {/* Editable amount */}
       <TableCell className="text-right">
