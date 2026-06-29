@@ -56,7 +56,7 @@ export class CategorySchema extends BaseModel {
 }
 
 export class ItemSchema extends BaseModel {
-  static $columns = ['categoryId', 'createdAt', 'defaultAmount', 'id', 'isActive', 'kind', 'name', 'sortOrder', 'updatedAt', 'workspaceId'] as const
+  static $columns = ['categoryId', 'createdAt', 'defaultAmount', 'id', 'installmentsPaid', 'installmentsTotal', 'isActive', 'kind', 'name', 'sortOrder', 'updatedAt', 'workspaceId'] as const
   $columns = ItemSchema.$columns
   @column()
   declare categoryId: bigint | number | null
@@ -66,6 +66,10 @@ export class ItemSchema extends BaseModel {
   declare defaultAmount: string | null
   @column({ isPrimary: true })
   declare id: bigint | number
+  @column()
+  declare installmentsPaid: number | null
+  @column()
+  declare installmentsTotal: number | null
   @column()
   declare isActive: boolean
   @column()
