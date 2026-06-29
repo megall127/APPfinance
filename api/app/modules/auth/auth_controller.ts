@@ -27,7 +27,9 @@ export default class AuthController {
     })
 
     // Token creation happens after the transaction commits.
-    const token = await User.accessTokens.create(user)
+    // Token expires in 30 days (it's stored client-side in localStorage; an
+    // expiry limits the window if it ever leaks via XSS).
+    const token = await User.accessTokens.create(user, ['*'], { expiresIn: '30 days' })
 
     return response.created({
       user: user.serialize(),
@@ -44,7 +46,9 @@ export default class AuthController {
     const { email, password } = await request.validateUsing(loginValidator)
 
     const user = await User.verifyCredentials(email, password)
-    const token = await User.accessTokens.create(user)
+    // Token expires in 30 days (it's stored client-side in localStorage; an
+    // expiry limits the window if it ever leaks via XSS).
+    const token = await User.accessTokens.create(user, ['*'], { expiresIn: '30 days' })
     const workspace = await this.#workspaceFor(user)
 
     return {

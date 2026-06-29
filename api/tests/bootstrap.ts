@@ -7,16 +7,15 @@ import { dbAssertions } from '@adonisjs/lucid/plugins/db'
 import testUtils from '@adonisjs/core/services/test_utils'
 import { authApiClient } from '@adonisjs/auth/plugins/api_client'
 import { sessionApiClient } from '@adonisjs/session/plugins/api_client'
-import type { Registry } from '../.adonisjs/client/registry/schema.d.ts'
 
 /**
- * This file is imported by the "bin/test.ts" entrypoint file
- */
-declare module '@japa/api-client/types' {
-  interface RoutesRegistry extends Registry {}
-}
-
-/**
+ * NOTE: we intentionally do NOT bind the Tuyau `Registry` to the api-client's
+ * `RoutesRegistry`. Doing so types `response.body()` as the strict union of all
+ * route responses (`ModelObject | ModelObject[]`), which makes the functional
+ * specs' direct `response.body().id` accesses fail `tsc` (arrays have no `.id`).
+ * The specs assert with explicit casts where they need typed access, so leaving
+ * `body()` loosely typed keeps the production build (`node ace build`) green.
+ *
  * This file is imported by the "bin/test.ts" entrypoint file
  */
 
