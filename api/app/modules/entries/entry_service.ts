@@ -38,7 +38,10 @@ export default class EntryService {
       .first()
     const oldStatus = existing?.status ?? 'pending'
 
-    const newStatus = dto.status ?? 'pending'
+    // Preserve the existing status/note/paidAt when the caller doesn't send them
+    // (e.g. editing ONLY the amount must NOT silently un-pay a paid entry, nor
+    // retract an installment).
+    const newStatus = dto.status ?? existing?.status ?? 'pending'
 
     const entry = await MonthlyEntry.updateOrCreate(
       { itemId: item.id, year: dto.year, month: dto.month },
@@ -46,8 +49,8 @@ export default class EntryService {
         workspaceId,
         amount: dto.amount.toFixed(2),
         status: newStatus,
-        note: dto.note ?? null,
-        paidAt: newStatus === 'paid' ? DateTime.now() : null,
+        note: dto.note ?? existing?.note ?? null,
+        paidAt: newStatus === 'paid' ? (existing?.paidAt ?? DateTime.now()) : null,
       }
     )
 

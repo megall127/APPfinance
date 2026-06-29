@@ -384,4 +384,49 @@ test.group('Entries', (group) => {
     assert.equal(found3?.installmentsPaid, 3, 'installmentsPaid should be 3 after paying 3 months')
     assert.isNotOk(found3?.isActive, 'Item should be inactive (quitado) when paid=total (3=3)')
   })
+
+  test('editar só o valor de um lançamento Pago não o despaga nem retrai a parcela', async ({
+    client,
+    assert,
+  }) => {
+    const { token } = await registerAndAuth(client, 'installedit@test.com')
+
+    const itemRes = await client
+      .post('/api/v1/items')
+      .bearerToken(token)
+      .json({ name: 'Parcelado Edit', kind: 'expense', installmentsTotal: 3, installmentsPaid: 0 })
+    itemRes.assertStatus(201)
+    const itemId = (itemRes.body() as { id: number }).id
+
+    // create entry + mark paid → installmentsPaid = 1
+    const up = await client
+      .post('/api/v1/entries/upsert')
+      .bearerToken(token)
+      .json({ itemId, year: 2026, month: 6, amount: 100 })
+    const entryId = (up.body() as { id: number }).id
+    await client.post(`/api/v1/entries/${entryId}/toggle-paid`).bearerToken(token)
+
+    // edit ONLY the amount (upsert without status) → must stay paid, counter unchanged
+    const edit = await client
+      .post('/api/v1/entries/upsert')
+      .bearerToken(token)
+      .json({ itemId, year: 2026, month: 6, amount: 120 })
+    edit.assertStatus(200)
+    assert.equal(
+      (edit.body() as { status: string }).status,
+      'paid',
+      'editing only the amount must NOT un-pay the entry'
+    )
+    assert.equal((edit.body() as { amount: string }).amount, '120.00')
+
+    const list = await client.get('/api/v1/items').bearerToken(token)
+    const found = (list.body() as Array<{ id: number; installmentsPaid: number }>).find(
+      (i) => Number(i.id) === Number(itemId)
+    )
+    assert.equal(
+      found?.installmentsPaid,
+      1,
+      'editing the amount must not retract the installment counter'
+    )
+  })
 })
