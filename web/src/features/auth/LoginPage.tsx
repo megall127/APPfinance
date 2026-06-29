@@ -76,9 +76,7 @@ export default function LoginPage() {
         <div className="relative z-10 max-w-sm space-y-8">
           {/* Wordmark */}
           <div>
-            <h1 className="text-6xl font-extrabold tracking-tight text-foreground">
-              Le<span className="text-primary">finance</span>
-            </h1>
+            <img src="/logo.png" alt="Lefinance" className="w-56 h-auto" />
             <p className="mt-3 text-lg text-muted-foreground leading-relaxed">
               Controle suas finanças familiares com simplicidade e clareza.
             </p>
@@ -126,9 +124,11 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-6">
           {/* Mobile-only wordmark */}
           <div className="md:hidden text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
-              Le<span className="text-primary">finance</span>
-            </h1>
+            <img
+              src="/logo.png"
+              alt="Lefinance"
+              className="h-9 w-auto mx-auto"
+            />
             <p className="mt-1 text-sm text-muted-foreground">
               Controle de finanças familiar
             </p>

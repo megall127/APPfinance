@@ -54,9 +54,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
     <aside className="flex h-full flex-col bg-card border-r border-border">
       {/* Wordmark */}
       <div className="flex items-center justify-between px-5 py-5">
-        <span className="text-xl font-bold tracking-tight text-foreground">
-          Le<span className="text-primary">finance</span>
-        </span>
+        <img src="/logo.png" alt="Lefinance" className="h-7 w-auto" />
         {onClose && (
           <button
             onClick={onClose}

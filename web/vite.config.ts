@@ -47,11 +47,6 @@ export default defineConfig({
         // Do NOT aggressively cache API calls — the API lives on a separate origin.
         // Goal for v1: installable, not full offline.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
-        // Don't precache large favicon/logo images — the browser fetches the
-        // favicon directly; precaching big images would bloat the SW and can
-        // exceed the precache size limit. Raise the limit modestly as a safety net.
-        globIgnores: ['**/favicon.png', '**/ChatGPT*.png'],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: 'index.html',
         // Exclude any /api routes from precaching (separate origin anyway)
         navigateFallbackDenylist: [/^\/api\//],
