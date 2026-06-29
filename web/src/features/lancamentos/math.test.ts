@@ -4,8 +4,12 @@ import type { EntryRow, Entry, EntryItem, ItemKind } from './useEntries'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function makeItem(id: string, kind: ItemKind): EntryItem {
-  return { id, name: `item-${id}`, kind, categoryId: 'c1' }
+function makeItem(
+  id: string,
+  kind: ItemKind,
+  defaultAmount?: string | null,
+): EntryItem {
+  return { id, name: `item-${id}`, kind, categoryId: 'c1', defaultAmount }
 }
 
 function makeEntry(
@@ -95,6 +99,23 @@ describe('computeMonthSummary', () => {
     expect(result.total).toBe(150) // 100 + 50 (only expenses with entries)
     expect(result.pago).toBe(100) // only the paid expense
     expect(result.falta).toBe(50) // 150 - 100
+  })
+
+  it('counts expense item defaults for rows without an entry (planned amount)', () => {
+    const rows: EntryRow[] = [
+      // expense with entry (paid) → 100 in total + pago
+      row(makeItem('1', 'expense'), makeEntry('1', '100.00', 'paid')),
+      // expense, no entry, has default 50 → +50 to total (planned, unpaid)
+      row(makeItem('2', 'expense', '50.00'), null),
+      // expense, no entry, no default → excluded
+      row(makeItem('3', 'expense'), null),
+      // income with default + no entry → excluded (not an expense)
+      row(makeItem('4', 'income', '9999.00'), null),
+    ]
+    const result = computeMonthSummary(rows)
+    expect(result.total).toBe(150) // 100 entry + 50 default
+    expect(result.pago).toBe(100) // only the paid entry
+    expect(result.falta).toBe(50) // 150 - 100 (the planned default is unpaid)
   })
 
   it('returns zeros for an empty list', () => {

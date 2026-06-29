@@ -1,5 +1,6 @@
 import { Fragment, useState, useMemo } from 'react'
 import { MonthYearPicker } from '@/features/dashboard/MonthYearPicker'
+import { useCategories } from '@/features/categorias/useCategories'
 import { useEntries } from './useEntries'
 import { EntryRow } from './EntryRow'
 import { computeMonthSummary } from './math'
@@ -70,17 +71,31 @@ export default function LancamentosPage() {
   const [month, setMonth] = useState(() => new Date().getMonth() + 1)
 
   const { data: rows, isLoading, isError } = useEntries(year, month)
+  const { data: categories } = useCategories()
+
+  // The entries endpoint returns items with `categoryId` only (no name/color),
+  // so resolve the category from the workspace's categories list. Ids arrive as
+  // numbers at runtime, so key by String() for a reliable match.
+  const categoryById = useMemo(() => {
+    const m = new Map<string, { name: string; color: string }>()
+    for (const c of categories ?? []) {
+      m.set(String(c.id), { name: c.name, color: c.color ?? '#94a3b8' })
+    }
+    return m
+  }, [categories])
 
   // Group by category for display, preserving the category id for stable keys.
   const grouped = useMemo(() => {
     if (!rows) return []
     const map = new Map<string, { label: string; color: string; rows: EntryRowData[] }>()
     for (const row of rows) {
-      const catId = row.item.categoryId ?? '__none__'
-      const catName = row.item.categoryName ?? 'Sem categoria'
-      const catColor = row.item.categoryColor ?? '#94a3b8'
+      const rawCat = row.item.categoryId
+      const catId = rawCat != null && rawCat !== '' ? String(rawCat) : '__none__'
+      const cat = categoryById.get(catId)
+      const label = cat?.name ?? 'Sem categoria'
+      const color = cat?.color ?? '#94a3b8'
       if (!map.has(catId)) {
-        map.set(catId, { label: catName, color: catColor, rows: [] })
+        map.set(catId, { label, color, rows: [] })
       }
       map.get(catId)!.rows.push(row)
     }
@@ -88,7 +103,7 @@ export default function LancamentosPage() {
       catId,
       ...group,
     }))
-  }, [rows])
+  }, [rows, categoryById])
 
   const monthLabel = MONTHS_PT[month - 1]
 

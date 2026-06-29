@@ -40,9 +40,11 @@ export interface MonthSummary {
 /**
  * Computes the month totals from the loaded entry rows, client-side.
  *
- * Only EXPENSE items with a non-null entry count toward the totals
- * (income/card items and items without an entry are excluded).
- *   total = sum of expense amounts
+ * EXPENSE items count toward the totals (income/card items are excluded):
+ *   - with an entry  → use the entry amount; add to `pago` when status is 'paid'.
+ *   - with NO entry  → use the item's `defaultAmount` as the planned (unpaid) amount,
+ *                      so the suggested defaults shown in the grid are reflected here.
+ *   total = sum of expense amounts (saved entries + planned defaults)
  *   pago  = sum of expense amounts whose entry status is 'paid'
  *   falta = total − pago
  */
@@ -50,11 +52,17 @@ export function computeMonthSummary(rows: EntryRow[]): MonthSummary {
   let total = 0
   let pago = 0
   for (const { item, entry } of rows) {
-    if (item.kind !== 'expense' || !entry) continue
-    const amount = Number(entry.amount)
-    if (!Number.isFinite(amount)) continue
-    total += amount
-    if (entry.status === 'paid') pago += amount
+    if (item.kind !== 'expense') continue
+    if (entry) {
+      const amount = Number(entry.amount)
+      if (!Number.isFinite(amount)) continue
+      total += amount
+      if (entry.status === 'paid') pago += amount
+    } else {
+      // No entry yet — count the item's saved default as the planned amount.
+      const planned = Number(item.defaultAmount)
+      if (Number.isFinite(planned) && planned > 0) total += planned
+    }
   }
   return { total, pago, falta: total - pago }
 }
