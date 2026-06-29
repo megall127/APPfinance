@@ -309,4 +309,79 @@ test.group('Entries', (group) => {
     const res = await client.get('/api/v1/entries').bearerToken(token)
     res.assertStatus(422)
   })
+
+  test('installment auto-advance: toggle-paid increments installmentsPaid; reaching total sets isActive=false', async ({
+    client,
+    assert,
+  }) => {
+    const { token } = await registerAndAuth(client, 'installentry1@test.com')
+
+    // Create an installment item: total=3, paid=0
+    const itemRes = await client
+      .post('/api/v1/items')
+      .bearerToken(token)
+      .json({ name: 'Parcelado', kind: 'expense', installmentsTotal: 3, installmentsPaid: 0 })
+    itemRes.assertStatus(201)
+    const itemId = (itemRes.body() as { id: number }).id
+
+    // Create an entry for month 6/2026 (status=pending by default)
+    const upsertRes = await client
+      .post('/api/v1/entries/upsert')
+      .bearerToken(token)
+      .json({ itemId, year: 2026, month: 6, amount: 100 })
+    upsertRes.assertStatus(200)
+    const entryId = (upsertRes.body() as { id: number }).id
+
+    // Toggle to paid → installmentsPaid should be 1
+    const t1 = await client.post(`/api/v1/entries/${entryId}/toggle-paid`).bearerToken(token)
+    t1.assertStatus(200)
+    assert.equal((t1.body() as { status: string }).status, 'paid')
+
+    // Verify the item now has installmentsPaid=1
+    const list1 = await client.get('/api/v1/items').bearerToken(token)
+    list1.assertStatus(200)
+    const found1 = (list1.body() as Array<{ id: number; installmentsPaid: number; isActive: unknown }>)
+      .find((i) => Number(i.id) === Number(itemId))
+    assert.equal(found1?.installmentsPaid, 1, 'installmentsPaid should be 1 after first toggle to paid')
+    assert.isOk(found1?.isActive, 'Item should be active (1 < 3)')
+
+    // Toggle back to pending → installmentsPaid should return to 0
+    const t2 = await client.post(`/api/v1/entries/${entryId}/toggle-paid`).bearerToken(token)
+    t2.assertStatus(200)
+    assert.equal((t2.body() as { status: string }).status, 'pending')
+
+    const list2 = await client.get('/api/v1/items').bearerToken(token)
+    const found2 = (list2.body() as Array<{ id: number; installmentsPaid: number }>)
+      .find((i) => Number(i.id) === Number(itemId))
+    assert.equal(found2?.installmentsPaid, 0, 'installmentsPaid should be 0 after toggle back to pending')
+
+    // Now create 2 more entries for months 7 and 8, toggle each to paid
+    // to drive installmentsPaid to 3 (= total) → quitado
+    const u2 = await client
+      .post('/api/v1/entries/upsert')
+      .bearerToken(token)
+      .json({ itemId, year: 2026, month: 7, amount: 100 })
+    u2.assertStatus(200)
+    const e2Id = (u2.body() as { id: number }).id
+
+    const u3 = await client
+      .post('/api/v1/entries/upsert')
+      .bearerToken(token)
+      .json({ itemId, year: 2026, month: 8, amount: 100 })
+    u3.assertStatus(200)
+    const e3Id = (u3.body() as { id: number }).id
+
+    // Toggle entry 1 (June) to paid (again)
+    await client.post(`/api/v1/entries/${entryId}/toggle-paid`).bearerToken(token)
+    // Toggle entry 2 (July) to paid
+    await client.post(`/api/v1/entries/${e2Id}/toggle-paid`).bearerToken(token)
+    // Toggle entry 3 (August) to paid → now paid=3 = total → quitado
+    await client.post(`/api/v1/entries/${e3Id}/toggle-paid`).bearerToken(token)
+
+    const list3 = await client.get('/api/v1/items').bearerToken(token)
+    const found3 = (list3.body() as Array<{ id: number; installmentsPaid: number; isActive: unknown }>)
+      .find((i) => Number(i.id) === Number(itemId))
+    assert.equal(found3?.installmentsPaid, 3, 'installmentsPaid should be 3 after paying 3 months')
+    assert.isNotOk(found3?.isActive, 'Item should be inactive (quitado) when paid=total (3=3)')
+  })
 })

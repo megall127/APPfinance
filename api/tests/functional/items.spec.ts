@@ -324,4 +324,42 @@ test.group('Items CRUD', (group) => {
     const res = await client.get('/api/v1/items')
     res.assertStatus(401)
   })
+
+  test('POST /api/v1/items with installments → persists installmentsTotal and installmentsPaid', async ({
+    client,
+    assert,
+  }) => {
+    const { token } = await registerAndAuth(client, 'iteminstall1@test.com')
+
+    const res = await client
+      .post('/api/v1/items')
+      .bearerToken(token)
+      .json({ name: 'Geladeira', kind: 'expense', installmentsTotal: 10, installmentsPaid: 4 })
+
+    res.assertStatus(201)
+    const body = res.body() as { installmentsTotal: number; installmentsPaid: number; isActive: unknown }
+    assert.equal(body.installmentsTotal, 10)
+    assert.equal(body.installmentsPaid, 4)
+    // 4/10 → still active
+    assert.isOk(body.isActive, 'Item should be active (4 < 10)')
+  })
+
+  test('POST /api/v1/items with 10/10 installments → isActive=false (quitado)', async ({
+    client,
+    assert,
+  }) => {
+    const { token } = await registerAndAuth(client, 'iteminstall2@test.com')
+
+    const res = await client
+      .post('/api/v1/items')
+      .bearerToken(token)
+      .json({ name: 'TV parcelada', kind: 'expense', installmentsTotal: 10, installmentsPaid: 10 })
+
+    res.assertStatus(201)
+    const body = res.body() as { installmentsTotal: number; installmentsPaid: number; isActive: unknown }
+    assert.equal(body.installmentsTotal, 10)
+    assert.equal(body.installmentsPaid, 10)
+    // 10/10 → quitado → inactive
+    assert.isNotOk(body.isActive, 'Item should be inactive (quitado) when paid=total')
+  })
 })
