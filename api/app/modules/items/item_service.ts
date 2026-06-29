@@ -13,6 +13,8 @@ type CreateDto = {
   defaultAmount?: string
   isActive?: boolean
   sortOrder?: number
+  installmentsTotal?: number
+  installmentsPaid?: number
 }
 
 type UpdateDto = {
@@ -22,6 +24,8 @@ type UpdateDto = {
   defaultAmount?: string
   isActive?: boolean
   sortOrder?: number
+  installmentsTotal?: number
+  installmentsPaid?: number
 }
 
 export default class ItemService {
@@ -51,14 +55,31 @@ export default class ItemService {
         .firstOrFail()
     }
 
+    // Installments logic
+    let installmentsTotal: number | null = dto.installmentsTotal ?? null
+    let installmentsPaid: number | null = null
+    if (installmentsTotal != null) {
+      installmentsPaid = dto.installmentsPaid ?? 0
+      installmentsPaid = Math.max(0, Math.min(installmentsTotal, installmentsPaid))
+    }
+
+    // Determine isActive:
+    // - For installment items: active if paid < total (quitado → inactive)
+    // - For non-installment items: use dto.isActive (default true)
+    const isActive = installmentsTotal != null
+      ? installmentsPaid! < installmentsTotal
+      : (dto.isActive ?? true)
+
     return Item.create({
       workspaceId,
       name: dto.name,
       kind: dto.kind,
       categoryId: dto.categoryId ?? null,
       defaultAmount: dto.defaultAmount ?? null,
-      isActive: dto.isActive ?? true,
+      isActive: isActive,
       sortOrder: dto.sortOrder ?? 0,
+      installmentsTotal: installmentsTotal,
+      installmentsPaid: installmentsPaid,
     })
   }
 
@@ -78,6 +99,26 @@ export default class ItemService {
         .where('workspace_id', workspaceId)
         .where('id', dto.categoryId)
         .firstOrFail()
+    }
+
+    // Installments update logic
+    if (dto.installmentsTotal !== undefined) {
+      const total = dto.installmentsTotal
+      item.installmentsTotal = total
+      // When total changes, re-clamp paid
+      const currentPaid = dto.installmentsPaid ?? Number(item.installmentsPaid ?? 0)
+      item.installmentsPaid = Math.max(0, Math.min(total, currentPaid))
+      // Quitado: if installment item, isActive = paid < total
+      if (dto.isActive === undefined) {
+        item.isActive = item.installmentsPaid < total
+      }
+    } else if (dto.installmentsPaid !== undefined) {
+      // Only paid changed (total unchanged)
+      const total = Number(item.installmentsTotal ?? 0)
+      item.installmentsPaid = Math.max(0, Math.min(total, dto.installmentsPaid))
+      if (dto.isActive === undefined && item.installmentsTotal != null) {
+        item.isActive = item.installmentsPaid < Number(item.installmentsTotal)
+      }
     }
 
     if (dto.name !== undefined) item.name = dto.name

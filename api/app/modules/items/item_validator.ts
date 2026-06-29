@@ -21,6 +21,8 @@ export const createItemValidator = vine.compile(
       .optional(),
     isActive: vine.boolean().optional(),
     sortOrder: vine.number().optional(),
+    installmentsTotal: vine.number().withoutDecimals().positive().optional(),
+    installmentsPaid: vine.number().withoutDecimals().min(0).optional(),
   })
 )
 
@@ -52,5 +54,7 @@ export const updateItemValidator = vine.compile(
       .optional(),
     isActive: vine.boolean().optional(),
     sortOrder: vine.number().optional(),
+    installmentsTotal: vine.number().withoutDecimals().positive().optional(),
+    installmentsPaid: vine.number().withoutDecimals().min(0).optional(),
   })
 )
