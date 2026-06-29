@@ -119,6 +119,7 @@ export function useUpsertEntry(year: number, month: number) {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['dashboard'] })
       void qc.invalidateQueries({ queryKey: ['dashboard-yearly'] })
+      void qc.invalidateQueries({ queryKey: ['items'] })
     },
   })
 }
@@ -177,6 +178,7 @@ export function useTogglePaid(year: number, month: number) {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['dashboard'] })
       void qc.invalidateQueries({ queryKey: ['dashboard-yearly'] })
+      void qc.invalidateQueries({ queryKey: ['items'] })
     },
   })
 }

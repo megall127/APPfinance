@@ -1,5 +1,6 @@
 import { Pencil, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { formatBRL } from '@/lib/format'
 import type { Item } from './useItems'
@@ -26,6 +27,9 @@ export function ItemRow({
 }: ItemRowProps) {
   const isActive = Boolean(item.isActive)
   const amount = item.defaultAmount ? Number(item.defaultAmount) : null
+  const total = item.installmentsTotal
+  const paid = item.installmentsPaid ?? 0
+  const isQuitado = total != null && paid >= total
 
   return (
     <div
@@ -43,6 +47,26 @@ export function ItemRow({
             </Badge>
           )}
         </span>
+        {/* Installment progress */}
+        {total != null && (
+          <div className="w-full mt-1">
+            {isQuitado ? (
+              <Badge className="text-xs bg-green-600 text-white hover:bg-green-600">
+                Quitado
+              </Badge>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Progress
+                  value={total > 0 ? (paid / total) * 100 : 0}
+                  className="h-1.5 flex-1 max-w-[120px]"
+                />
+                <span className="text-xs text-muted-foreground shrink-0">
+                  Parcela {paid}/{total} · faltam {total - paid}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Category badge */}

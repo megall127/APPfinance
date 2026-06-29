@@ -15,6 +15,8 @@ export interface Item {
   /** May come back as 0/1 from the API */
   isActive: boolean | number
   sortOrder: number
+  installmentsTotal: number | null
+  installmentsPaid: number | null
 }
 
 export interface CreateItemPayload {
@@ -25,6 +27,8 @@ export interface CreateItemPayload {
   defaultAmount?: string
   isActive?: boolean
   sortOrder?: number
+  installmentsTotal?: number
+  installmentsPaid?: number
 }
 
 export type UpdateItemPayload = Partial<CreateItemPayload>

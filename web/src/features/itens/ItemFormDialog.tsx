@@ -38,7 +38,17 @@ const itemSchema = z.object({
   kind: z.enum(['income', 'expense', 'card_subscription']),
   categoryId: z.string().optional(),
   defaultAmount: z.string().optional(),
-})
+  installmentsTotal: z.string().optional(),
+  installmentsPaid: z.string().optional(),
+}).refine(
+  (data) => {
+    const total = data.installmentsTotal ? Number.parseInt(data.installmentsTotal, 10) : undefined
+    const paid = data.installmentsPaid ? Number.parseInt(data.installmentsPaid, 10) : undefined
+    if (total !== undefined && paid !== undefined && paid > total) return false
+    return true
+  },
+  { message: 'Parcelas pagas não pode ser maior que o total', path: ['installmentsPaid'] }
+)
 
 type ItemFormData = z.infer<typeof itemSchema>
 
@@ -106,6 +116,8 @@ export function ItemFormDialog({
         defaultAmount: item?.defaultAmount
           ? Number(item.defaultAmount).toFixed(2).replace('.', ',')
           : '',
+        installmentsTotal: item?.installmentsTotal != null ? String(item.installmentsTotal) : '',
+        installmentsPaid: item?.installmentsPaid != null ? String(item.installmentsPaid) : '',
       })
     }
   }, [open, item, defaultKind, reset])
@@ -122,6 +134,12 @@ export function ItemFormDialog({
       return
     }
 
+    // Parse installments
+    const totalRaw = data.installmentsTotal?.trim()
+    const paidRaw = data.installmentsPaid?.trim()
+    const parsedTotal = totalRaw ? Number.parseInt(totalRaw, 10) : undefined
+    const parsedPaid = paidRaw ? Number.parseInt(paidRaw, 10) : undefined
+
     const payload: CreateItemPayload = {
       name: data.name,
       kind: data.kind,
@@ -132,6 +150,8 @@ export function ItemFormDialog({
       // The API validates defaultAmount as a decimal STRING (e.g. "54.75"),
       // so serialize the parsed number to a 2-decimal string.
       defaultAmount: parsedAmount != null ? parsedAmount.toFixed(2) : undefined,
+      installmentsTotal: parsedTotal !== undefined && !isNaN(parsedTotal) ? parsedTotal : undefined,
+      installmentsPaid: parsedPaid !== undefined && !isNaN(parsedPaid) ? parsedPaid : undefined,
     }
 
     try {
@@ -248,6 +268,41 @@ export function ItemFormDialog({
             <p className="text-xs text-muted-foreground">
               Opcional. Use vírgula como separador decimal.
             </p>
+          </div>
+
+          {/* Parcelamento */}
+          <div className="space-y-3 border-t pt-4">
+            <p className="text-sm font-medium text-foreground">Parcelamento (opcional)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="item-installments-total">Total de parcelas</Label>
+                <Input
+                  id="item-installments-total"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  placeholder="Ex.: 12"
+                  {...register('installmentsTotal')}
+                />
+                {errors.installmentsTotal?.message && (
+                  <p className="text-xs text-destructive">{errors.installmentsTotal.message}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="item-installments-paid">Parcelas já pagas</Label>
+                <Input
+                  id="item-installments-paid"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  placeholder="Ex.: 0"
+                  {...register('installmentsPaid')}
+                />
+                {errors.installmentsPaid?.message && (
+                  <p className="text-xs text-destructive">{errors.installmentsPaid.message}</p>
+                )}
+              </div>
+            </div>
           </div>
 
           <DialogFooter className="pt-2">
