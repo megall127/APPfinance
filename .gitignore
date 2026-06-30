@@ -19,6 +19,9 @@ web/dist/
 .env.*.local
 !.env.example
 
+# Archives / junk
+*.zip
+
 # Logs
 *.log
 npm-debug.log*
