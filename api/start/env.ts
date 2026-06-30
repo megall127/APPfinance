@@ -25,6 +25,9 @@ export default await Env.create(new URL('../', import.meta.url), {
   // Session
   SESSION_DRIVER: Env.schema.enum(['cookie', 'memory', 'database'] as const),
 
+  // CORS — origens extras separadas por virgula (alem das padroes em config/cors.ts)
+  CORS_ORIGIN: Env.schema.string.optional(),
+
   // Database
   // Nao usamos format: 'host' porque nomes de servico do EasyPanel/Docker
   // contem underscore (ex: danceonline_lefinance-db), invalido pela RFC de hostname

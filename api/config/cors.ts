@@ -1,4 +1,19 @@
 import { defineConfig } from '@adonisjs/cors'
+import env from '#start/env'
+
+/**
+ * Allowed origins for cross-origin requests.
+ *
+ * Defaults to the Vite dev server (http://localhost:5173) plus the
+ * production web app on Vercel. Extra origins can be added via the
+ * CORS_ORIGIN env var (comma-separated) without changing this file.
+ */
+const defaultOrigins = ['http://localhost:5173', 'https://ap-pfinance.vercel.app']
+const envOrigins = (env.get('CORS_ORIGIN', '') as string)
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])]
 
 /**
  * Configuration options to tweak the CORS policy. The following
@@ -14,9 +29,8 @@ const corsConfig = defineConfig({
 
   /**
    * Allowed origins for cross-origin requests.
-   * The React web app runs on http://localhost:5173 (Vite dev server).
    */
-  origin: ['http://localhost:5173'],
+  origin: allowedOrigins,
 
   /**
    * HTTP methods accepted for cross-origin requests.
