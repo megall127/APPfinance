@@ -1,0 +1,11 @@
+**/node_modules
+**/build
+**/dist
+**/tmp
+**/.env
+**/.env.local
+web
+*.log
+*.zip
+.git
+.superpowers

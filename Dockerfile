@@ -1,16 +1,16 @@
 FROM node:24-alpine AS base
 WORKDIR /app
 
-# --- Stage 1: build (gera a pasta ./build autônoma) ---
+# --- Stage 1: build (gera a pasta ./build autonoma da API) ---
 FROM base AS build
-COPY package*.json ./
+COPY api/package*.json ./
 RUN npm ci
-COPY . .
+COPY api/ ./
 RUN npm run build
 
 # --- Stage 2: dependencias de producao ---
 FROM base AS production-deps
-COPY package*.json ./
+COPY api/package*.json ./
 RUN npm ci --omit=dev
 
 # --- Stage 3: imagem final ---
