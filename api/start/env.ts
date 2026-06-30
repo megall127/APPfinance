@@ -26,7 +26,10 @@ export default await Env.create(new URL('../', import.meta.url), {
   SESSION_DRIVER: Env.schema.enum(['cookie', 'memory', 'database'] as const),
 
   // Database
-  DB_HOST: Env.schema.string({ format: 'host' }),
+  // Nao usamos format: 'host' porque nomes de servico do EasyPanel/Docker
+  // contem underscore (ex: danceonline_lefinance-db), invalido pela RFC de hostname
+  // mas resolvido normalmente pelo DNS interno.
+  DB_HOST: Env.schema.string(),
   DB_PORT: Env.schema.number(),
   DB_USER: Env.schema.string(),
   DB_PASSWORD: Env.schema.string.optional(),
