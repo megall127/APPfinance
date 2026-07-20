@@ -64,6 +64,7 @@ export function usePullToRefresh(
     }
 
     function handleEnd() {
+      if (stateRef.current.status === 'refreshing') return
       if (stateRef.current.status === 'pulling') dispatch({ type: 'end' })
       else dispatch({ type: 'settle' })
     }
@@ -87,17 +88,19 @@ export function usePullToRefresh(
   useEffect(() => {
     if (state.status !== 'refreshing') return
     let cancelled = false
+    let timeoutId: ReturnType<typeof window.setTimeout> | undefined
     const started = performance.now()
     void Promise.resolve(onRefreshRef.current())
       .catch(() => {})
       .then(() => {
         const wait = Math.max(0, MIN_REFRESH_MS - (performance.now() - started))
-        window.setTimeout(() => {
+        timeoutId = window.setTimeout(() => {
           if (!cancelled) dispatch({ type: 'settle' })
         }, wait)
       })
     return () => {
       cancelled = true
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
     }
   }, [state.status])
 

@@ -76,4 +76,24 @@ describe('usePullToRefresh', () => {
 
     expect(onRefresh).not.toHaveBeenCalled()
   })
+
+  it('não cancela o refresh se um toque acidental acontecer durante a atualização', () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined)
+    render(<Harness onRefresh={onRefresh} />)
+    const scroller = screen.getByTestId('scroller')
+    setScrollTop(scroller, 0)
+
+    // dispara o refresh
+    fireEvent.touchStart(scroller, { touches: [{ clientX: 0, clientY: 0 }] })
+    fireEvent.touchMove(scroller, { touches: [{ clientX: 0, clientY: 200 }] })
+    fireEvent.touchEnd(scroller, { changedTouches: [{ clientX: 0, clientY: 200 }] })
+    expect(screen.getByTestId('status').textContent).toBe('refreshing')
+
+    // um toque acidental durante o refresh NÃO deve voltar pra idle
+    fireEvent.touchStart(scroller, { touches: [{ clientX: 0, clientY: 0 }] })
+    fireEvent.touchEnd(scroller, { changedTouches: [{ clientX: 0, clientY: 0 }] })
+    expect(screen.getByTestId('status').textContent).toBe('refreshing')
+
+    expect(onRefresh).toHaveBeenCalledTimes(1)
+  })
 })
