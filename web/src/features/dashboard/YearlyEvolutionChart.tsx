@@ -62,7 +62,7 @@ export function YearlyEvolutionChart({
 }: YearlyEvolutionChartProps) {
   if (isLoading) {
     return (
-      <Card className="rounded-2xl shadow-sm">
+      <Card className="h-full rounded-2xl shadow-sm">
         <CardHeader>
           <Skeleton className="h-5 w-36" />
         </CardHeader>
@@ -85,7 +85,7 @@ export function YearlyEvolutionChart({
     chartData.some((m) => m.total > 0 || m.pago > 0)
 
   return (
-    <Card className="rounded-2xl shadow-sm">
+    <Card className="h-full rounded-2xl shadow-sm">
       <CardHeader>
         <CardTitle className="text-base font-semibold">
           Evolução Anual

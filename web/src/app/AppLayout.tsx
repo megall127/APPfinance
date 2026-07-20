@@ -17,6 +17,8 @@ import {
 import type { ForwardRefExoticComponent, RefAttributes } from 'react'
 import { Button } from '@/components/ui/button'
 import { useSession } from '@/features/auth/session'
+import { PullToRefresh } from '@/components/PullToRefresh'
+import { queryClient } from '@/lib/query'
 
 // ── Nav items ─────────────────────────────────────────────────────────────────
 
@@ -161,9 +163,12 @@ export function AppLayout() {
       {/* ── Main column: topbar + content ── */}
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
         <Topbar onMenuToggle={() => setSidebarOpen((v) => !v)} />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <PullToRefresh
+          onRefresh={() => queryClient.refetchQueries({ type: 'active' })}
+          className="flex-1 overflow-y-auto p-4 lg:p-6"
+        >
           <Outlet />
-        </main>
+        </PullToRefresh>
       </div>
     </div>
   )

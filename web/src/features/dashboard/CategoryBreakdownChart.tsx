@@ -41,7 +41,7 @@ export function CategoryBreakdownChart({
 }: CategoryBreakdownChartProps) {
   if (isLoading) {
     return (
-      <Card className="rounded-2xl shadow-sm">
+      <Card className="h-full rounded-2xl shadow-sm">
         <CardHeader>
           <Skeleton className="h-5 w-44" />
         </CardHeader>
@@ -56,7 +56,7 @@ export function CategoryBreakdownChart({
   const hasData = chartData.length > 0 && chartData.some((d) => d.total > 0)
 
   return (
-    <Card className="rounded-2xl shadow-sm">
+    <Card className="h-full rounded-2xl shadow-sm">
       <CardHeader>
         <CardTitle className="text-base font-semibold">
           Gastos por Categoria
