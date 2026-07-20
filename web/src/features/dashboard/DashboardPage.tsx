@@ -1,27 +1,26 @@
 import { useState } from 'react'
 import { useDashboard, useYearly } from './useDashboard'
 import { MonthYearPicker } from './MonthYearPicker'
-import { SummaryCards } from './SummaryCards'
-import { CategoryBreakdownChart } from './CategoryBreakdownChart'
+import { ResumoPanel } from './panels/ResumoPanel'
+import { BalancoPanel } from './panels/BalancoPanel'
 import { YearlyEvolutionChart } from './YearlyEvolutionChart'
+import { CategoryBreakdownChart } from './CategoryBreakdownChart'
+import { Carousel, CarouselItem } from '@/components/ui/carousel'
 
 export default function DashboardPage() {
-  // Default to the current year and 1-based month.
-  // Lazy initializers so new Date() is only allocated once, not every render.
+  // Ano atual e mês 1-based; inicializadores lazy (new Date() só uma vez).
   const [year, setYear] = useState(() => new Date().getFullYear())
-  const [month, setMonth] = useState(() => new Date().getMonth() + 1) // getMonth() is 0-based → +1
+  const [month, setMonth] = useState(() => new Date().getMonth() + 1)
 
   const { data: dashData, isLoading: dashLoading, isError: dashError } = useDashboard(year, month)
   const { data: yearlyData, isLoading: yearlyLoading } = useYearly(year)
 
   return (
     <div className="space-y-6">
-      {/* ── Page header + picker ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Cabeçalho + seletor */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Dashboard
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
             Visão geral das finanças do período selecionado
           </p>
@@ -34,25 +33,27 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* ── Summary cards ── */}
       {dashError && !dashLoading && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           Erro ao carregar os dados do período. Tente novamente.
         </div>
       )}
-      <SummaryCards data={dashData} isLoading={dashLoading} />
 
-      {/* ── Charts: yearly evolution (left) + category breakdown (right) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <YearlyEvolutionChart
-          data={yearlyData?.months}
-          isLoading={yearlyLoading}
-        />
-        <CategoryBreakdownChart
-          data={dashData?.breakdownPorCategoria}
-          isLoading={dashLoading}
-        />
-      </div>
+      {/* Carrossel de painéis (mobile) → grade 2×2 (lg) */}
+      <Carousel gridClassName="lg:grid-cols-2">
+        <CarouselItem>
+          <ResumoPanel data={dashData} isLoading={dashLoading} />
+        </CarouselItem>
+        <CarouselItem>
+          <BalancoPanel data={dashData} isLoading={dashLoading} />
+        </CarouselItem>
+        <CarouselItem>
+          <YearlyEvolutionChart data={yearlyData?.months} isLoading={yearlyLoading} />
+        </CarouselItem>
+        <CarouselItem>
+          <CategoryBreakdownChart data={dashData?.breakdownPorCategoria} isLoading={dashLoading} />
+        </CarouselItem>
+      </Carousel>
     </div>
   )
 }

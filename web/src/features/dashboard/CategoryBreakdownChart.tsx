@@ -41,7 +41,7 @@ export function CategoryBreakdownChart({
 }: CategoryBreakdownChartProps) {
   if (isLoading) {
     return (
-      <Card className="rounded-2xl shadow-sm">
+      <Card className="h-full rounded-2xl shadow-sm">
         <CardHeader>
           <Skeleton className="h-5 w-44" />
         </CardHeader>
