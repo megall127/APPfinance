@@ -3,6 +3,8 @@ import { useDashboard, useYearly } from './useDashboard'
 import { MonthYearPicker } from './MonthYearPicker'
 import { ResumoPanel } from './panels/ResumoPanel'
 import { BalancoPanel } from './panels/BalancoPanel'
+import { GuardadoPanel } from './panels/GuardadoPanel'
+import { useReserveSummary } from '@/features/reservas/useReserves'
 import { YearlyEvolutionChart } from './YearlyEvolutionChart'
 import { CategoryBreakdownChart } from './CategoryBreakdownChart'
 import { Carousel, CarouselItem } from '@/components/ui/carousel'
@@ -14,6 +16,11 @@ export default function DashboardPage() {
 
   const { data: dashData, isLoading: dashLoading, isError: dashError } = useDashboard(year, month)
   const { data: yearlyData, isLoading: yearlyLoading } = useYearly(year)
+  const {
+    data: reservesData,
+    isLoading: reservesLoading,
+    isError: reservesError,
+  } = useReserveSummary(year, month)
 
   return (
     <div className="space-y-6">
@@ -46,6 +53,13 @@ export default function DashboardPage() {
         </CarouselItem>
         <CarouselItem>
           <BalancoPanel data={dashData} isLoading={dashLoading} />
+        </CarouselItem>
+        <CarouselItem>
+          <GuardadoPanel
+            data={reservesData}
+            isLoading={reservesLoading}
+            isError={reservesError}
+          />
         </CarouselItem>
         <CarouselItem>
           <YearlyEvolutionChart data={yearlyData?.months} isLoading={yearlyLoading} />

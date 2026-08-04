@@ -56,8 +56,10 @@ export class CategorySchema extends BaseModel {
 }
 
 export class ItemSchema extends BaseModel {
-  static $columns = ['categoryId', 'createdAt', 'defaultAmount', 'id', 'installmentsPaid', 'installmentsTotal', 'isActive', 'kind', 'name', 'sortOrder', 'updatedAt', 'workspaceId'] as const
+  static $columns = ['autoSource', 'categoryId', 'createdAt', 'defaultAmount', 'id', 'installmentsPaid', 'installmentsTotal', 'isActive', 'kind', 'name', 'sortOrder', 'updatedAt', 'workspaceId'] as const
   $columns = ItemSchema.$columns
+  @column()
+  declare autoSource: string | null
   @column()
   declare categoryId: bigint | number | null
   @column.dateTime({ autoCreate: true })
@@ -156,6 +158,137 @@ export class WorkspaceMemberSchema extends BaseModel {
   declare updatedAt: DateTime | null
   @column()
   declare userId: number | null
+  @column()
+  declare workspaceId: bigint | number | null
+}
+
+export class ReserveAccountSchema extends BaseModel {
+  static $columns = ['archived', 'color', 'createdAt', 'goalAmount', 'goalDate', 'goalMonthlyContribution', 'id', 'institution', 'lastClosedPeriod', 'name', 'openedAt', 'sortOrder', 'updatedAt', 'workspaceId'] as const
+  $columns = ReserveAccountSchema.$columns
+  @column()
+  declare archived: boolean
+  @column()
+  declare color: string | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare goalAmount: string | null
+  @column.date()
+  declare goalDate: DateTime | null
+  @column()
+  declare goalMonthlyContribution: string | null
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare institution: string | null
+  @column()
+  declare lastClosedPeriod: string | null
+  @column()
+  declare name: string
+  @column.date()
+  declare openedAt: DateTime
+  @column()
+  declare sortOrder: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare workspaceId: bigint | number | null
+}
+
+export class ReserveRatePeriodSchema extends BaseModel {
+  static $columns = ['createdAt', 'effectiveMonth', 'effectiveYear', 'id', 'rateKind', 'rateValue', 'reserveAccountId', 'updatedAt', 'workspaceId'] as const
+  $columns = ReserveRatePeriodSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare effectiveMonth: number
+  @column()
+  declare effectiveYear: number
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare rateKind: string
+  @column()
+  declare rateValue: string
+  @column()
+  declare reserveAccountId: bigint | number | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare workspaceId: bigint | number | null
+}
+
+export class ReserveMovementSchema extends BaseModel {
+  static $columns = ['amount', 'createdAt', 'description', 'id', 'kind', 'occurredOn', 'reserveAccountId', 'updatedAt', 'workspaceId', 'yieldBase', 'yieldCdiAnnual', 'yieldPeriod', 'yieldRateApplied', 'yieldRateKind', 'yieldRateSource'] as const
+  $columns = ReserveMovementSchema.$columns
+  @column()
+  declare amount: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare description: string | null
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare kind: string
+  @column.date()
+  declare occurredOn: DateTime
+  @column()
+  declare reserveAccountId: bigint | number | null
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare workspaceId: bigint | number | null
+  @column()
+  declare yieldBase: string | null
+  @column()
+  declare yieldCdiAnnual: string | null
+  @column()
+  declare yieldPeriod: string | null
+  @column()
+  declare yieldRateApplied: string | null
+  @column()
+  declare yieldRateKind: string | null
+  @column()
+  declare yieldRateSource: string | null
+}
+
+export class CdiRateSchema extends BaseModel {
+  static $columns = ['annualRate', 'createdAt', 'id', 'month', 'updatedAt', 'workspaceId', 'year'] as const
+  $columns = CdiRateSchema.$columns
+  @column()
+  declare annualRate: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column()
+  declare month: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare workspaceId: bigint | number | null
+  @column()
+  declare year: number
+}
+
+export class VariableExpenseSchema extends BaseModel {
+  static $columns = ['amount', 'categoryId', 'createdAt', 'description', 'id', 'spentOn', 'updatedAt', 'workspaceId'] as const
+  $columns = VariableExpenseSchema.$columns
+  @column()
+  declare amount: string
+  @column()
+  declare categoryId: bigint | number | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime | null
+  @column()
+  declare description: string | null
+  @column({ isPrimary: true })
+  declare id: bigint | number
+  @column.date()
+  declare spentOn: DateTime
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
   @column()
   declare workspaceId: bigint | number | null
 }

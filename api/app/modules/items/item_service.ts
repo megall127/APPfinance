@@ -1,6 +1,7 @@
 import Item from '#models/item'
 import Category from '#models/category'
 import MonthlyEntry from '#models/monthly_entry'
+import AutoItemReadOnlyException from '#exceptions/auto_item_read_only_exception'
 
 /**
  * DTO shapes inferred from the validators.
@@ -94,6 +95,13 @@ export default class ItemService {
       .where('id', id)
       .firstOrFail()
 
+    // Renomear e recategorizar sao permitidos no item automatico — e o que a
+    // feature promete. Trocar o tipo, nao: viraria receita/cartao e sairia da
+    // conta de despesas sem que ninguem percebesse.
+    if (item.autoSource !== null && dto.kind !== undefined && dto.kind !== item.kind) {
+      throw new AutoItemReadOnlyException('Não dá para mudar o tipo do item de gastos.')
+    }
+
     if (dto.categoryId !== undefined) {
       await Category.query()
         .where('workspace_id', workspaceId)
@@ -146,6 +154,14 @@ export default class ItemService {
       .where('workspace_id', workspaceId)
       .where('id', id)
       .firstOrFail()
+
+    // Apagar (ou desativar) o item automatico quebraria o vinculo com a aba Gastos:
+    // os gastos continuariam existindo, mas sem linha em Lancamentos.
+    if (item.autoSource !== null) {
+      throw new AutoItemReadOnlyException(
+        'Esse item é gerado pela aba Gastos. Apague os gastos do mês para zerá-lo.'
+      )
+    }
 
     const linkedEntry = await MonthlyEntry.query()
       .where('item_id', id)

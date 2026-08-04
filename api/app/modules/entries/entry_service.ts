@@ -1,5 +1,6 @@
 import MonthlyEntry from '#models/monthly_entry'
 import Item from '#models/item'
+import AutoItemReadOnlyException from '#exceptions/auto_item_read_only_exception'
 import { DateTime } from 'luxon'
 
 type UpsertDto = {
@@ -28,6 +29,14 @@ export default class EntryService {
       .where('workspace_id', workspaceId)
       .where('id', dto.itemId)
       .firstOrFail()
+
+    // O valor do item automatico e derivado dos gastos avulsos; aceitar um upsert
+    // aqui dessincronizaria o total em relacao a tabela que o originou.
+    if (item.autoSource !== null) {
+      throw new AutoItemReadOnlyException(
+        'O valor de "Gastos do mês" é calculado pela aba Gastos e não pode ser editado aqui.'
+      )
+    }
 
     // Capture existing entry to detect status transition
     const existing = await MonthlyEntry.query()
@@ -75,6 +84,8 @@ export default class EntryService {
       .where('id', id)
       .firstOrFail()
 
+    await this.assertEntryIsEditable(workspaceId, Number(entry.itemId), 'toggle')
+
     // Flip the status first, then derive paidAt from the NEW status
     entry.status = entry.status === 'paid' ? 'pending' : 'paid'
     entry.paidAt = entry.status === 'paid' ? DateTime.now() : null
@@ -118,6 +129,8 @@ export default class EntryService {
       .where('id', id)
       .firstOrFail()
 
+    await this.assertEntryIsEditable(workspaceId, Number(entry.itemId), 'edit')
+
     const oldStatus = entry.status  // capture before mutation
 
     if (dto.amount !== undefined) entry.amount = dto.amount.toFixed(2)
@@ -136,6 +149,26 @@ export default class EntryService {
     }
 
     return entry
+  }
+
+  /**
+   * Barra escrita em lancamento de item automatico (hoje so o da aba Gastos).
+   * `intent` so muda a mensagem: 'toggle' fala de status, 'edit' fala de valor.
+   */
+  private async assertEntryIsEditable(
+    workspaceId: number,
+    itemId: number,
+    intent: 'toggle' | 'edit'
+  ) {
+    const item = await Item.query().where('workspace_id', workspaceId).where('id', itemId).first()
+
+    if (!item || item.autoSource === null) return
+
+    throw new AutoItemReadOnlyException(
+      intent === 'toggle'
+        ? 'Gastos já lançados contam sempre como pagos.'
+        : 'O valor de "Gastos do mês" é calculado pela aba Gastos e não pode ser editado aqui.'
+    )
   }
 
   /**

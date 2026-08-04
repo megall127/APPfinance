@@ -9,9 +9,11 @@ import RegisterPage from '@/features/auth/RegisterPage'
 // Protected pages (stubs — real pages come in Tasks 16–22)
 import DashboardPage from '@/features/dashboard/DashboardPage'
 import LancamentosPage from '@/features/lancamentos/LancamentosPage'
+import GastosPage from '@/features/gastos/GastosPage'
 import ItensPage from '@/features/itens/ItensPage'
 import CategoriasPage from '@/features/categorias/CategoriasPage'
 import AssinaturasPage from '@/features/assinaturas/AssinaturasPage'
+import ReservasPage from '@/features/reservas/ReservasPage'
 import HistoricoPage from '@/features/historico/HistoricoPage'
 import ImportarPage from '@/features/importar/ImportarPage'
 
@@ -35,9 +37,11 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: 'lancamentos', element: <LancamentosPage /> },
+          { path: 'gastos', element: <GastosPage /> },
           { path: 'itens', element: <ItensPage /> },
           { path: 'categorias', element: <CategoriasPage /> },
           { path: 'assinaturas', element: <AssinaturasPage /> },
+          { path: 'reservas', element: <ReservasPage /> },
           { path: 'historico', element: <HistoricoPage /> },
           { path: 'importar', element: <ImportarPage /> },
         ],

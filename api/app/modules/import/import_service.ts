@@ -122,15 +122,38 @@ export default class ImportService {
       )
     }
 
-    const item = await Item.updateOrCreate(
-      { workspaceId, name: parsedItem.name, kind: parsedItem.kind },
-      {
-        categoryId,
-        defaultAmount:
-          parsedItem.defaultAmount !== undefined ? parsedItem.defaultAmount.toFixed(2) : null,
-      },
-      { client: trx }
-    )
+    // whereNull('auto_source') é obrigatório: sem ele, uma linha da planilha
+    // chamada como o item automático da aba Gastos casaria com ele, e o laço
+    // seguinte sobrescreveria o monthly_entry calculado — numa linha que a UI
+    // mostra travada e o usuário não consegue corrigir por tela nenhuma.
+    // `updateOrCreate` não aceita whereNull no payload de busca, daí o
+    // find-then-write explícito.
+    const existing = await Item.query({ client: trx })
+      .where('workspace_id', workspaceId)
+      .where('name', parsedItem.name)
+      .where('kind', parsedItem.kind)
+      .whereNull('auto_source')
+      .first()
+
+    const payload = {
+      categoryId,
+      defaultAmount:
+        parsedItem.defaultAmount !== undefined ? parsedItem.defaultAmount.toFixed(2) : null,
+    }
+
+    let item: Item
+    if (existing !== null) {
+      existing.merge(payload)
+      existing.useTransaction(trx)
+      await existing.save()
+      item = existing
+    } else {
+      item = await Item.create(
+        { workspaceId, name: parsedItem.name, kind: parsedItem.kind, ...payload },
+        { client: trx }
+      )
+    }
+
     itemCache.set(key, item)
     return item
   }

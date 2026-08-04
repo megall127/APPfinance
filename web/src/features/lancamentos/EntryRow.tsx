@@ -1,6 +1,8 @@
+import { Link } from 'react-router-dom'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { EditableAmount } from './EditableAmount'
+import { LockedAmount } from './LockedAmount'
 import { StatusToggle } from './StatusToggle'
 import type { EntryRow as EntryRowData } from './useEntries'
 import { useUpsertEntry, useTogglePaid } from './useEntries'
@@ -13,6 +15,8 @@ interface EntryRowProps {
 
 export function EntryRow({ row, year, month }: EntryRowProps) {
   const { item, entry } = row
+  // Item gerado pela aba Gastos: valor calculado, sempre pago, editável só de lá.
+  const isAuto = item.autoSource != null
   const { mutate: upsert, isPending: upserting } = useUpsertEntry(year, month)
   const { mutate: toggle, isPending: toggling } = useTogglePaid(year, month)
 
@@ -47,23 +51,36 @@ export function EntryRow({ row, year, month }: EntryRowProps) {
         </span>
       </TableCell>
 
-      {/* Editable amount */}
+      {/* Editable amount — travado quando o item é gerado pela aba Gastos */}
       <TableCell className="text-right">
-        <EditableAmount
-          entry={entry}
-          defaultAmount={item.defaultAmount}
-          onCommit={handleCommit}
-        />
+        {isAuto ? (
+          <LockedAmount amount={entry?.amount ?? null} />
+        ) : (
+          <EditableAmount
+            entry={entry}
+            defaultAmount={item.defaultAmount}
+            onCommit={handleCommit}
+          />
+        )}
       </TableCell>
 
-      {/* Status toggle */}
+      {/* Status — a linha automática conta sempre como paga */}
       <TableCell>
-        <StatusToggle
-          entry={entry}
-          kind={item.kind}
-          onToggle={handleToggle}
-          isPending={toggleBusy}
-        />
+        {isAuto ? (
+          <Link
+            to="/gastos"
+            className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+          >
+            ver gastos
+          </Link>
+        ) : (
+          <StatusToggle
+            entry={entry}
+            kind={item.kind}
+            onToggle={handleToggle}
+            isPending={toggleBusy}
+          />
+        )}
       </TableCell>
     </TableRow>
   )

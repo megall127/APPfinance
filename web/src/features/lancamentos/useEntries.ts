@@ -17,6 +17,8 @@ export interface EntryItem {
   /** Installment fields (when the item is parcelado): total and how many already paid. */
   installmentsTotal?: number | null
   installmentsPaid?: number | null
+  /** 'variable_expenses' quando o item é gerado pela aba Gastos; null nos itens normais. */
+  autoSource?: string | null
 }
 
 export interface Entry {

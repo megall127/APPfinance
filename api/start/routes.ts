@@ -143,6 +143,137 @@ router
       .use([middleware.auth(), middleware.currentWorkspace()])
 
     /**
+     * Reserves — workspace-scoped savings accounts ("caixinhas"), their signed
+     * movement ledger, monthly yield accrual and the CDI reference rate.
+     *
+     * ORDER MATTERS: AdonisJS matches in registration order, so every literal
+     * segment must come BEFORE the `:id` routes — otherwise `reserves/summary`
+     * is captured as `reserves/accounts/:id` with id="summary", `Number(params.id)`
+     * becomes NaN and the caller gets an unexplainable 404. Same reasoning as the
+     * `entries/upsert` note above: `accounts/:id/statement` and
+     * `accounts/:id/reconcile` are registered before the bare `accounts/:id`.
+     */
+    router
+      .group(() => {
+        router
+          .get('reserves/summary', [
+            () => import('#modules/reserves/reserves_controller'),
+            'summary',
+          ])
+          .as('reserves.summary')
+        router
+          .get('reserves/cdi', [() => import('#modules/reserves/reserves_controller'), 'cdiIndex'])
+          .as('reserves.cdiIndex')
+        router
+          .put('reserves/cdi', [() => import('#modules/reserves/reserves_controller'), 'cdiUpsert'])
+          .as('reserves.cdiUpsert')
+        router
+          .post('reserves/yield/close', [
+            () => import('#modules/reserves/reserves_controller'),
+            'closeYield',
+          ])
+          .as('reserves.closeYield')
+        router
+          .get('reserves/movements', [
+            () => import('#modules/reserves/reserves_controller'),
+            'movementsIndex',
+          ])
+          .as('reserves.movementsIndex')
+        router
+          .post('reserves/movements', [
+            () => import('#modules/reserves/reserves_controller'),
+            'movementsStore',
+          ])
+          .as('reserves.movementsStore')
+        router
+          .patch('reserves/movements/:id', [
+            () => import('#modules/reserves/reserves_controller'),
+            'movementsUpdate',
+          ])
+          .as('reserves.movementsUpdate')
+        router
+          .delete('reserves/movements/:id', [
+            () => import('#modules/reserves/reserves_controller'),
+            'movementsDestroy',
+          ])
+          .as('reserves.movementsDestroy')
+        router
+          .get('reserves/accounts', [
+            () => import('#modules/reserves/reserves_controller'),
+            'index',
+          ])
+          .as('reserves.index')
+        router
+          .post('reserves/accounts', [
+            () => import('#modules/reserves/reserves_controller'),
+            'store',
+          ])
+          .as('reserves.store')
+        router
+          .get('reserves/accounts/:id/statement', [
+            () => import('#modules/reserves/reserves_controller'),
+            'statement',
+          ])
+          .as('reserves.statement')
+        router
+          .post('reserves/accounts/:id/reconcile', [
+            () => import('#modules/reserves/reserves_controller'),
+            'reconcile',
+          ])
+          .as('reserves.reconcile')
+        router
+          .patch('reserves/accounts/:id', [
+            () => import('#modules/reserves/reserves_controller'),
+            'update',
+          ])
+          .as('reserves.update')
+        router
+          .delete('reserves/accounts/:id', [
+            () => import('#modules/reserves/reserves_controller'),
+            'destroy',
+          ])
+          .as('reserves.destroy')
+      })
+      .use([middleware.auth(), middleware.currentWorkspace()])
+
+    /**
+     * Variable expenses — gastos avulsos do dia a dia ("gastos da rua").
+     * O total do mes e projetado automaticamente num monthly_entry do item
+     * marcado com items.auto_source = 'variable_expenses', que fica somente-leitura.
+     *
+     * Prefixo por extenso de proposito: `/expenses` colidiria semanticamente com
+     * `items?kind=expense`, que e outra coisa.
+     */
+    router
+      .group(() => {
+        router
+          .get('variable-expenses', [
+            () => import('#modules/variable_expenses/variable_expenses_controller'),
+            'index',
+          ])
+          .as('variableExpenses.index')
+        router
+          .post('variable-expenses', [
+            () => import('#modules/variable_expenses/variable_expenses_controller'),
+            'store',
+          ])
+          .as('variableExpenses.store')
+        router
+          .patch('variable-expenses/:id', [
+            () => import('#modules/variable_expenses/variable_expenses_controller'),
+            'update',
+          ])
+          .as('variableExpenses.update')
+        router
+          .delete('variable-expenses/:id', [
+            () => import('#modules/variable_expenses/variable_expenses_controller'),
+            'destroy',
+          ])
+          .as('variableExpenses.destroy')
+      })
+      .use([middleware.auth(), middleware.currentWorkspace()])
+
+    /**
      * Protected auth routes (valid bearer token required).
      * currentWorkspace is applied per-route — only `me` needs the workspace,
      * so `logout` is spared the extra query. Resource groups (Tasks 8-11)

@@ -3,9 +3,11 @@ import { NavLink, Outlet } from 'react-router-dom'
 import {
   LayoutDashboard,
   ScrollText,
+  Receipt,
   Package,
   Tag,
   RefreshCw,
+  PiggyBank,
   History,
   Upload,
   LogOut,
@@ -32,9 +34,11 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/lancamentos', label: 'Lançamentos', icon: ScrollText },
+  { to: '/gastos', label: 'Gastos', icon: Receipt },
   { to: '/itens', label: 'Itens', icon: Package },
   { to: '/categorias', label: 'Categorias', icon: Tag },
   { to: '/assinaturas', label: 'Assinaturas', icon: RefreshCw },
+  { to: '/reservas', label: 'Reservas', icon: PiggyBank },
   { to: '/historico', label: 'Histórico', icon: History },
   { to: '/importar', label: 'Importar', icon: Upload },
 ]
