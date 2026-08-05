@@ -34,9 +34,11 @@ export function parseAmountInput(input: string): number | null {
 export interface MonthSummary {
   /** Sum of EXPENSE amounts actually recorded this month. */
   total: number
-  /** Sum of EXPENSE amounts whose entry is paid. */
+  /** A parcela do total que veio da aba Gastos (item com `autoSource`). */
+  gastosAvulsos: number
+  /** Sum of EXPENSE amounts whose entry is paid — CONTAS only, no gasto avulso. */
   pago: number
-  /** total − pago. */
+  /** total − gastosAvulsos − pago. */
   falta: number
   /** Sum of INCOME amounts actually recorded this month. */
   receitas: number
@@ -47,20 +49,27 @@ export interface MonthSummary {
 /**
  * Computes the month totals from the loaded entry rows, client-side.
  *
- * Conta o REALIZADO, nunca o planejado: um item sem lançamento no mês não entra
- * em soma nenhuma, mesmo que a grade exiba o `defaultAmount` em itálico como
- * sugestão. Essa é a mesma regra do dashboard (DashboardService.monthSummary faz
- * INNER JOIN monthly_entries → items), e as duas telas precisam bater — foi
- * justamente a divergência entre elas que fazia "Total do mês" mostrar dois
- * valores diferentes sob o mesmo rótulo.
+ * Espelha regra a regra o DashboardService.monthSummary — as duas telas mostram
+ * os mesmos rótulos e precisam mostrar os mesmos números:
  *
- *   total    = soma das entries de kind='expense'
- *   pago     = soma das entries de kind='expense' com status 'paid'
- *   falta    = total − pago
- *   receitas = soma das entries de kind='income'
+ * 1. Conta o REALIZADO, nunca o planejado: item sem lançamento no mês não entra
+ *    em soma nenhuma, mesmo que a grade exiba o `defaultAmount` em itálico.
+ * 2. O item-espelho da aba Gastos (`autoSource`) fica FORA de pago/falta. Ele
+ *    chega com status 'paid' porque o dinheiro de fato saiu, mas não é conta
+ *    paga: somá-lo em `pago` fazia Lançamentos exibir R$ 2.852,57 onde o
+ *    dashboard exibia R$ 2.500,00.
+ *
+ *   total         = soma das entries de kind='expense'
+ *   gastosAvulsos = a parte de `total` que veio de item com autoSource
+ *   pago          = contas (não-auto) de kind='expense' com status 'paid'
+ *   falta         = total − gastosAvulsos − pago
+ *   receitas      = soma das entries de kind='income'
+ *
+ * Invariante: pago + falta + gastosAvulsos === total
  */
 export function computeMonthSummary(rows: EntryRow[]): MonthSummary {
   let total = 0
+  let gastosAvulsos = 0
   let pago = 0
   let receitas = 0
   for (const { item, entry } of rows) {
@@ -71,11 +80,22 @@ export function computeMonthSummary(rows: EntryRow[]): MonthSummary {
 
     if (item.kind === 'expense') {
       total += amount
-      if (entry.status === 'paid') pago += amount
+      if (item.autoSource != null) {
+        gastosAvulsos += amount
+      } else if (entry.status === 'paid') {
+        pago += amount
+      }
     } else if (item.kind === 'income') {
       receitas += amount
     }
     // card_subscription is excluded from the month total (anti-double-counting)
   }
-  return { total, pago, falta: total - pago, receitas, saldo: receitas - total }
+  return {
+    total,
+    gastosAvulsos,
+    pago,
+    falta: total - gastosAvulsos - pago,
+    receitas,
+    saldo: receitas - total,
+  }
 }

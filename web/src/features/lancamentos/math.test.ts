@@ -124,8 +124,44 @@ describe('computeMonthSummary', () => {
     expect(result.saldo).toBe(-100) // 0 - 100
   })
 
+  it('gasto avulso entra no total mas não em "Já pago" — igual ao dashboard', () => {
+    // Numeros reais de Ago/2026: o item-espelho "Gastos do mês" (auto_source)
+    // vem como 'paid' porque o dinheiro saiu, mas nao e CONTA paga. Contando-o
+    // aqui, Lancamentos mostrava R$ 2.852,57 e o dashboard R$ 2.500,00.
+    const espelho: EntryItem = {
+      id: '9',
+      name: 'Gastos do mês',
+      kind: 'expense',
+      categoryId: 'c1',
+      autoSource: 'variable_expenses',
+    }
+    const rows: EntryRow[] = [
+      row(makeItem('1', 'expense'), makeEntry('1', '2500.00', 'paid')),
+      row(espelho, makeEntry('9', '352.57', 'paid')),
+    ]
+
+    const result = computeMonthSummary(rows)
+    expect(result.total).toBeCloseTo(2852.57, 2)
+    expect(result.gastosAvulsos).toBeCloseTo(352.57, 2)
+    expect(result.pago).toBe(2500)
+    expect(result.falta).toBeCloseTo(0, 2)
+    // O mesmo fechamento que o dashboard garante.
+    expect(result.pago + result.falta + result.gastosAvulsos).toBeCloseTo(result.total, 2)
+  })
+
+  it('sem gasto avulso, gastosAvulsos é zero e falta continua total − pago', () => {
+    const rows: EntryRow[] = [
+      row(makeItem('1', 'expense'), makeEntry('1', '100.00', 'paid')),
+      row(makeItem('2', 'expense'), makeEntry('2', '50.00', 'pending')),
+    ]
+    const result = computeMonthSummary(rows)
+    expect(result.gastosAvulsos).toBe(0)
+    expect(result.falta).toBe(50)
+  })
+
   it('returns zeros for an empty list', () => {
     expect(computeMonthSummary([])).toEqual({
+      gastosAvulsos: 0,
       total: 0,
       pago: 0,
       falta: 0,

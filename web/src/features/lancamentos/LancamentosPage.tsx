@@ -25,7 +25,7 @@ interface SummaryFooterProps {
 }
 
 function SummaryFooter({ rows }: SummaryFooterProps) {
-  const { total, pago, falta, receitas, saldo } = useMemo(
+  const { total, gastosAvulsos, pago, falta, receitas, saldo } = useMemo(
     () => computeMonthSummary(rows),
     [rows],
   )
@@ -52,6 +52,14 @@ function SummaryFooter({ rows }: SummaryFooterProps) {
           {formatBRL(falta)}
         </span>
       </div>
+      {/* Fora de "Já pago"/"Falta pagar" de propósito: sem esta coluna, somar o
+          rodapé deixa o valor dos gastos avulsos sem explicação no total. */}
+      {gastosAvulsos > 0 && (
+        <div className="flex flex-col items-end">
+          <span className="text-muted-foreground">Gastos avulsos</span>
+          <span className="font-semibold tabular-nums">{formatBRL(gastosAvulsos)}</span>
+        </div>
+      )}
       <div className="flex flex-col items-end border-l border-border pl-6">
         <span className="text-muted-foreground">Saldo</span>
         <span
