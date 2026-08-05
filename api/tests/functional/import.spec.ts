@@ -105,8 +105,10 @@ test.group('Import (.xlsx → preview → commit)', (group) => {
   })
 
   /**
-   * Recurring income + card subscriptions are pre-filled as monthly entries for the
-   * latest year, so the dashboard reflects receitas and assinaturasCartao after import.
+   * Receita e assinatura recorrentes sao pre-lancadas nos meses que a planilha
+   * realmente usa — e SO neles. A planilha de 2026 vai ate maio; junho tem que
+   * ficar zerado, senao o dashboard de um mes sem movimento exibe "Total do mes
+   * R$ 0,00" ao lado de "Receitas R$ 9.010,00" e um saldo positivo fantasma.
    */
   test('POST /import/commit pre-fills receitas and assinaturasCartao for the dashboard', async ({
     client,
@@ -120,10 +122,24 @@ test.group('Import (.xlsx → preview → commit)', (group) => {
       .file('file', FIXTURE)
     commit.assertStatus(200)
 
-    const dash = await client.get('/api/v1/dashboard?year=2026&month=6').bearerToken(token)
-    dash.assertStatus(200)
-    assert.isAbove(dash.body().receitas, 0, 'income should pre-fill receitas')
-    assert.isAbove(dash.body().assinaturasCartao, 0, 'card subscriptions should pre-fill')
+    // Maio/2026 existe na planilha → receita e assinatura presentes.
+    const maio = await client.get('/api/v1/dashboard?year=2026&month=5').bearerToken(token)
+    maio.assertStatus(200)
+    assert.isAbove(maio.body().receitas, 0, 'income should pre-fill receitas')
+    assert.isAbove(maio.body().assinaturasCartao, 0, 'card subscriptions should pre-fill')
+
+    // Junho/2026 nao existe na planilha → nada pode ter sido inventado ali.
+    const junho = await client.get('/api/v1/dashboard?year=2026&month=6').bearerToken(token)
+    junho.assertStatus(200)
+    assert.equal(junho.body().receitas, 0, 'mes sem movimento nao pode ganhar receita')
+    assert.equal(junho.body().assinaturasCartao, 0, 'nem assinatura')
+    assert.equal(junho.body().totalDoMes, 0)
+
+    // Ano anterior tambem recebe a receita recorrente — antes ficava zerado e o
+    // saldo aparecia negativo do tamanho da despesa inteira.
+    const ano2025 = await client.get('/api/v1/dashboard?year=2025&month=8').bearerToken(token)
+    ano2025.assertStatus(200)
+    assert.isAbove(ano2025.body().receitas, 0, 'anos anteriores tambem tem receita')
   })
 
   /**

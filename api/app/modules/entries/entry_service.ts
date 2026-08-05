@@ -92,25 +92,43 @@ export default class EntryService {
 
     await entry.save()
     // Auto-advance installments counter: +1 when paid, -1 when unpaid
-    await this.applyInstallmentDelta(workspaceId, Number(entry.itemId), entry.status === 'paid' ? 1 : -1)
+    await this.applyInstallmentDelta(
+      workspaceId,
+      Number(entry.itemId),
+      entry.status === 'paid' ? 1 : -1
+    )
     return entry
   }
 
   /**
-   * Return all ACTIVE items for the workspace, each paired with their entry
-   * for the requested (year, month) or null if no entry exists.
-   * Result is ordered by item sort_order ascending.
+   * Items do workspace pareados com o entry do (year, month) pedido, ou null.
+   * Ordenado por sort_order ascendente.
+   *
+   * Entram os itens ATIVOS **e** os desativados que tenham lancamento NESTE mes.
+   * A segunda metade importa: `deactivateOrDelete` desativa em vez de apagar
+   * quando o item tem historico, e `applyInstallmentDelta` desativa o
+   * parcelamento ao quitar a ultima parcela. Filtrando so por is_active, esses
+   * lancamentos sumiam daqui mas continuavam somando no dashboard (que agrega
+   * monthly_entries sem olhar is_active) — as duas telas mostravam "Total do
+   * mes" diferentes para o mesmo mes, e o mes ja fechado perdia despesas reais.
+   * Nos meses SEM lancamento o item desativado continua fora, que e o certo:
+   * nao ha nada a pagar ali.
    */
   async monthView(workspaceId: number, year: number, month: number) {
-    const items = await Item.query()
-      .where('workspace_id', workspaceId)
-      .where('is_active', true)
-      .orderBy('sort_order')
-
     const entries = await MonthlyEntry.query()
       .where('workspace_id', workspaceId)
       .where('year', year)
       .where('month', month)
+
+    const idsComLancamento = entries.map((e) => Number(e.itemId))
+
+    const items = await Item.query()
+      .where('workspace_id', workspaceId)
+      .where((q) => {
+        q.where('is_active', true)
+        if (idsComLancamento.length > 0) q.orWhereIn('id', idsComLancamento)
+      })
+      .orderBy('sort_order')
 
     const byItem = new Map(entries.map((e) => [e.itemId, e]))
 
@@ -131,7 +149,7 @@ export default class EntryService {
 
     await this.assertEntryIsEditable(workspaceId, Number(entry.itemId), 'edit')
 
-    const oldStatus = entry.status  // capture before mutation
+    const oldStatus = entry.status // capture before mutation
 
     if (dto.amount !== undefined) entry.amount = dto.amount.toFixed(2)
     if (dto.status !== undefined) {

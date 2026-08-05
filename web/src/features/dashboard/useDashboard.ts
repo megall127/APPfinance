@@ -12,9 +12,15 @@ export interface CategoryBreakdown {
 
 export interface DashboardData {
   totalDoMes: number
+  /**
+   * Parcela do total que veio da aba Gastos (dinheiro que já saiu).
+   * Fica FORA de jaPago/faltaPagar, que medem as contas do mês:
+   * jaPago + faltaPagar + gastosVariaveis === totalDoMes
+   */
+  gastosVariaveis: number
   jaPago: number
   faltaPagar: number
-  /** 0..1 fraction, e.g. 0.75 = 75% */
+  /** 0..1 fraction sobre as CONTAS do mês, e.g. 0.75 = 75% */
   percentualPago: number
   receitas: number
   saldo: number

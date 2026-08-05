@@ -103,23 +103,25 @@ describe('computeMonthSummary', () => {
     expect(result.saldo).toBe(849) // 999 - 150
   })
 
-  it('counts expense and income item defaults for rows without an entry (planned)', () => {
+  it('ignores item defaults for rows without an entry — matches the dashboard', () => {
+    // O rodapé conta o REALIZADO, igual ao dashboard: um item sem lançamento no
+    // mês não entra em nada, por mais que a grade mostre o default em itálico.
     const rows: EntryRow[] = [
       // expense with entry (paid) → 100 in total + pago
       row(makeItem('1', 'expense'), makeEntry('1', '100.00', 'paid')),
-      // expense, no entry, has default 50 → +50 to total (planned, unpaid)
+      // expense, no entry, has default 50 → ignorado (não foi lançado)
       row(makeItem('2', 'expense', '50.00'), null),
-      // expense, no entry, no default → excluded
+      // expense, no entry, no default → ignorado
       row(makeItem('3', 'expense'), null),
-      // income, no entry, has default 9999 → counts toward receitas (planned)
+      // income, no entry, has default 9999 → ignorado (não foi lançado)
       row(makeItem('4', 'income', '9999.00'), null),
     ]
     const result = computeMonthSummary(rows)
-    expect(result.total).toBe(150) // 100 entry + 50 default expense
-    expect(result.pago).toBe(100) // only the paid entry
-    expect(result.falta).toBe(50) // 150 - 100 (the planned default is unpaid)
-    expect(result.receitas).toBe(9999) // the planned income default
-    expect(result.saldo).toBe(9849) // 9999 - 150
+    expect(result.total).toBe(100) // só a entry real
+    expect(result.pago).toBe(100)
+    expect(result.falta).toBe(0)
+    expect(result.receitas).toBe(0) // default de receita não conta
+    expect(result.saldo).toBe(-100) // 0 - 100
   })
 
   it('returns zeros for an empty list', () => {

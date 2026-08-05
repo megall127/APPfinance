@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { groupByDay, dayLabel } from './grouping'
+import { groupByDay, dayLabel, defaultSpentOn } from './grouping'
 import type { VariableExpense } from './useVariableExpenses'
 
 function gasto(id: string, spentOn: string, amount: string): VariableExpense {
@@ -80,5 +80,30 @@ describe('dayLabel', () => {
     // absorve o dia de 23h/25h em vez de virar "2 dias atrás".
     const hojeNoDST = new Date(2026, 9, 19)
     expect(dayLabel('2026-10-18', hojeNoDST)).toBe('Ontem, 18/10')
+  })
+})
+
+describe('defaultSpentOn', () => {
+  const hoje = new Date(2026, 7, 5) // 5 de agosto de 2026
+
+  it('usa a data de hoje quando o mês exibido é o mês corrente', () => {
+    expect(defaultSpentOn(2026, 8, hoje)).toBe('2026-08-05')
+  })
+
+  it('usa o dia 1 quando o mês exibido é um mês passado', () => {
+    // Sem isso o gasto lançado olhando julho ia parar em agosto.
+    expect(defaultSpentOn(2026, 7, hoje)).toBe('2026-07-01')
+  })
+
+  it('usa o dia 1 quando o mês exibido é um mês futuro', () => {
+    expect(defaultSpentOn(2026, 9, hoje)).toBe('2026-09-01')
+  })
+
+  it('não confunde o mesmo mês de outro ano', () => {
+    expect(defaultSpentOn(2025, 8, hoje)).toBe('2025-08-01')
+  })
+
+  it('zero-padding no mês de um dígito', () => {
+    expect(defaultSpentOn(2026, 3, hoje)).toBe('2026-03-01')
   })
 })

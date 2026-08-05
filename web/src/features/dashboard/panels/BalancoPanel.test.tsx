@@ -5,6 +5,7 @@ import type { DashboardData } from '../useDashboard'
 
 const base: DashboardData = {
   totalDoMes: 4200,
+  gastosVariaveis: 0,
   jaPago: 3100,
   faltaPagar: 1100,
   percentualPago: 0.74,

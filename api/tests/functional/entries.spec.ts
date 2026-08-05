@@ -123,6 +123,55 @@ test.group('Entries', (group) => {
   })
 
   /**
+   * Item desativado (excluido com historico, ou parcelamento quitado) precisa
+   * continuar visivel NOS MESES EM QUE TEM LANCAMENTO. Sem isso, a linha some de
+   * Lancamentos mas o valor continua somando no dashboard, e as duas telas
+   * exibem "Total do mes" diferentes para o mesmo mes.
+   */
+  test('monthView mostra item desativado no mes em que ele tem lancamento', async ({
+    client,
+    assert,
+  }) => {
+    const { token } = await registerAndAuth(client, 'e-inativo@test.com')
+
+    const academia = (
+      await client
+        .post('/api/v1/items')
+        .bearerToken(token)
+        .json({ name: 'Academia', kind: 'expense' })
+    ).body()
+
+    await client
+      .post('/api/v1/entries/upsert')
+      .bearerToken(token)
+      .json({ itemId: academia.id, year: 2026, month: 6, amount: 150, status: 'paid' })
+
+    // Excluir um item COM historico desativa em vez de apagar.
+    const del = await client.delete(`/api/v1/items/${academia.id}`).bearerToken(token)
+    del.assertStatus(200)
+    assert.isTrue(del.body().deactivated, 'item com entry deve ser desativado, nao apagado')
+
+    type Row = { item: { id: number; isActive: boolean }; entry: { amount: string } | null }
+
+    // Junho TEM lancamento → a linha continua na tela, igual ao dashboard.
+    const junho = await client.get('/api/v1/entries?year=2026&month=6').bearerToken(token)
+    junho.assertStatus(200)
+    const linhaJunho = (junho.body() as Row[]).find(
+      (r) => Number(r.item.id) === Number(academia.id)
+    )
+    assert.exists(linhaJunho, 'item desativado com entry no mes deve continuar aparecendo')
+    assert.equal(linhaJunho?.entry?.amount, '150.00')
+
+    // Julho NAO tem lancamento → some, porque o item esta desativado.
+    const julho = await client.get('/api/v1/entries?year=2026&month=7').bearerToken(token)
+    julho.assertStatus(200)
+    assert.notExists(
+      (julho.body() as Row[]).find((r) => Number(r.item.id) === Number(academia.id)),
+      'item desativado sem entry no mes nao deve aparecer'
+    )
+  })
+
+  /**
    * PATCH /api/v1/entries/:id updates amount, status, note.
    */
   test('PATCH /api/v1/entries/:id atualiza campos', async ({ client, assert }) => {

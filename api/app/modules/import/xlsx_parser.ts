@@ -58,16 +58,29 @@ function norm(value: string): string {
 }
 
 /**
- * Synthesize 12 pending monthly entries (months 1..12) at a fixed base amount.
- * Used for recurring income / card subscriptions, which carry a single base value
- * in the sheet but should pre-fill the whole latest year so the dashboard reflects them.
+ * Lancamentos pendentes de um valor-base recorrente, SOMENTE nos meses pedidos.
+ *
+ * Usado por receita e assinatura de cartao, que trazem um unico valor na planilha
+ * sem dimensao de mes. Espalhar pelos 12 meses inventava dinheiro em mes que o
+ * usuario nunca preencheu: o dashboard de um mes futuro mostrava "Total do mes
+ * R$ 0,00" ao lado de "Receitas R$ 9.010,00" e um saldo positivo fantasma.
  */
-function monthlyEntries(amount: number): ParsedEntry[] {
-  return Array.from({ length: 12 }, (_, i) => ({
-    month: i + 1,
+function monthlyEntries(amount: number, months: number[]): ParsedEntry[] {
+  return months.map((month) => ({
+    month,
     amount,
     status: 'pending' as const,
   }))
+}
+
+/** Meses (1..12) em que o ano tem despesa lancada — o recorte real da planilha. */
+function mesesUsados(year: ParsedYear): number[] {
+  const meses = new Set<number>()
+  for (const item of year.items) {
+    if (item.kind !== 'expense') continue
+    for (const entry of item.entries) meses.add(entry.month)
+  }
+  return [...meses].sort((a, b) => a - b)
 }
 
 /** Map a Portuguese month abbreviation (Jan, Fev, ...) to 1..12, or null. */
@@ -215,7 +228,8 @@ function parseIncome(sheet: ExcelJS.Worksheet): ParsedItem[] {
         kind: 'income',
         categoryHint: categoryHintFor(name),
         defaultAmount: base ?? undefined,
-        entries: base !== null ? monthlyEntries(base) : [],
+        // Os meses saem em parseWorkbook: dependem do recorte de cada ano.
+        entries: [],
       })
     }
     break
@@ -299,7 +313,8 @@ function parseCardSubscriptions(sheet: ExcelJS.Worksheet): ParsedItem[] {
           kind: 'card_subscription',
           categoryHint: categoryHintFor(name),
           defaultAmount: value ?? undefined,
-          entries: value !== null ? monthlyEntries(value) : [],
+          // Os meses saem em parseWorkbook: dependem do recorte de cada ano.
+          entries: [],
         })
       }
     }
@@ -333,10 +348,21 @@ export async function parseWorkbook(source: Buffer | string): Promise<ParsedWork
   const cards = parseCardSubscriptions(mainSheet)
   const paidByName = buildPaidMap(wb.getWorksheet('Controle 2026'))
 
-  // Attach income + card items (no year of their own) to the latest year.
-  if (yearsMap.size > 0) {
-    const latest = Math.max(...yearsMap.keys())
-    yearsMap.get(latest)!.items.push(...income, ...cards)
+  // Salario e assinatura nao tem ano proprio: valem para TODOS os anos da
+  // planilha, e so nos meses que aquele ano realmente usa.
+  //   - grudar so no ano mais recente deixava 2025/2024/2023 com "Receitas
+  //     R$ 0,00" e um saldo negativo do tamanho da despesa inteira;
+  //   - espalhar pelos 12 meses inventava receita em mes sem movimento.
+  // O clone por ano e obrigatorio: sem ele os anos compartilhariam o mesmo
+  // objeto e o ultimo `entries` gravado valeria para todos.
+  for (const year of yearsMap.values()) {
+    const meses = mesesUsados(year)
+    for (const base of [...income, ...cards]) {
+      year.items.push({
+        ...base,
+        entries: base.defaultAmount !== undefined ? monthlyEntries(base.defaultAmount, meses) : [],
+      })
+    }
   }
 
   // Apply 2026 paid/pending status by matching item name. Only real expenses

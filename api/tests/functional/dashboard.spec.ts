@@ -12,10 +12,7 @@ test.group('Dashboard', (group) => {
     const { token } = await registerAndAuth(client, 'd1@test.com')
 
     const luz = (
-      await client
-        .post('/api/v1/items')
-        .bearerToken(token)
-        .json({ name: 'Luz', kind: 'expense' })
+      await client.post('/api/v1/items').bearerToken(token).json({ name: 'Luz', kind: 'expense' })
     ).body()
 
     const net = (
@@ -56,10 +53,7 @@ test.group('Dashboard', (group) => {
 
     // expense items
     const luz = (
-      await client
-        .post('/api/v1/items')
-        .bearerToken(token)
-        .json({ name: 'Luz', kind: 'expense' })
+      await client.post('/api/v1/items').bearerToken(token).json({ name: 'Luz', kind: 'expense' })
     ).body()
 
     const net = (
@@ -113,6 +107,87 @@ test.group('Dashboard', (group) => {
     assert.equal(body.receitas, 5000)
     assert.equal(body.saldo, 5000 - 300)
     assert.equal(body.assinaturasCartao, 50)
+  })
+
+  /**
+   * Gastos avulsos sao dinheiro que JA saiu — nao sao "conta paga".
+   * Somados em jaPago, eles empurravam o anel de progresso para cima sem que
+   * nenhum boleto tivesse sido pago ("29% pago" com tudo em aberto).
+   * Ficam no totalDoMes (o dinheiro saiu) mas fora de jaPago/faltaPagar/anel,
+   * que medem as CONTAS do mes, e aparecem no proprio campo gastosVariaveis.
+   */
+  test('gastos avulsos nao contam como conta paga no anel de progresso', async ({
+    client,
+    assert,
+  }) => {
+    const { token } = await registerAndAuth(client, 'd5@test.com')
+
+    // Conta fixa de 2000, ainda em aberto.
+    const aluguel = (
+      await client
+        .post('/api/v1/items')
+        .bearerToken(token)
+        .json({ name: 'Aluguel', kind: 'expense' })
+    ).body()
+
+    await client
+      .post('/api/v1/entries/upsert')
+      .bearerToken(token)
+      .json({ itemId: aluguel.id, year: 2026, month: 6, amount: 2000, status: 'pending' })
+
+    // 800 de gastos da rua no mesmo mes, via aba Gastos.
+    const gasto = await client
+      .post('/api/v1/variable-expenses')
+      .bearerToken(token)
+      .json({ amount: 800, spentOn: '2026-06-15' })
+    gasto.assertStatus(201)
+
+    const res = await client.get('/api/v1/dashboard?year=2026&month=6').bearerToken(token)
+    res.assertStatus(200)
+
+    const body = res.body()
+    assert.equal(body.totalDoMes, 2800, 'o dinheiro que saiu continua no total do mes')
+    assert.equal(body.gastosVariaveis, 800, 'gastos avulsos tem campo proprio')
+    assert.equal(body.jaPago, 0, 'nenhuma CONTA foi paga')
+    assert.equal(body.faltaPagar, 2000, 'falta o aluguel, e so ele')
+    assert.strictEqual(body.percentualPago, 0, 'o anel mede contas pagas, nao gasto avulso')
+    assert.equal(
+      body.jaPago + body.faltaPagar + body.gastosVariaveis,
+      body.totalDoMes,
+      'os tres numeros precisam fechar o total'
+    )
+  })
+
+  /**
+   * A serie "Pago" do grafico anual usa a mesma regra do anel do Resumo, senao
+   * a mesma tela mostra dois "pago" diferentes para o mesmo mes.
+   */
+  test('yearly: gasto avulso entra no total do mes mas nao em pago', async ({ client, assert }) => {
+    const { token } = await registerAndAuth(client, 'd6@test.com')
+
+    const aluguel = (
+      await client
+        .post('/api/v1/items')
+        .bearerToken(token)
+        .json({ name: 'Aluguel', kind: 'expense' })
+    ).body()
+
+    await client
+      .post('/api/v1/entries/upsert')
+      .bearerToken(token)
+      .json({ itemId: aluguel.id, year: 2026, month: 6, amount: 2000, status: 'pending' })
+
+    await client
+      .post('/api/v1/variable-expenses')
+      .bearerToken(token)
+      .json({ amount: 800, spentOn: '2026-06-15' })
+
+    const res = await client.get('/api/v1/dashboard/yearly?year=2026').bearerToken(token)
+    res.assertStatus(200)
+
+    const junho = res.body().months.find((m: { month: number }) => m.month === 6)
+    assert.equal(junho.total, 2800, 'o gasto avulso saiu do bolso: entra no total')
+    assert.equal(junho.paid, 0, '"Pago" no grafico e conta paga, igual ao anel do Resumo')
   })
 
   /**
@@ -178,10 +253,7 @@ test.group('Dashboard', (group) => {
     const { token } = await registerAndAuth(client, 'd4@test.com')
 
     const luz = (
-      await client
-        .post('/api/v1/items')
-        .bearerToken(token)
-        .json({ name: 'Luz', kind: 'expense' })
+      await client.post('/api/v1/items').bearerToken(token).json({ name: 'Luz', kind: 'expense' })
     ).body()
 
     const net = (
@@ -256,9 +328,7 @@ test.group('Dashboard', (group) => {
     assert.strictEqual(body.percentualPago, 0, 'zero-guard must return 0, not NaN')
 
     // Yearly cross-workspace check
-    const yearly = await client
-      .get('/api/v1/dashboard/yearly?year=2026')
-      .bearerToken(userB.token)
+    const yearly = await client.get('/api/v1/dashboard/yearly?year=2026').bearerToken(userB.token)
     yearly.assertStatus(200)
 
     const june = yearly.body().months.find((m: { month: number }) => m.month === 6)

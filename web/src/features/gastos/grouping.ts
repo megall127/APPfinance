@@ -22,6 +22,23 @@ export function todayISO(): string {
   return `${now.getFullYear()}-${month}-${day}`
 }
 
+/**
+ * Data que o formulário de gasto deve sugerir para o mês que está na tela.
+ *
+ * Hoje SÓ quando o mês exibido é o mês corrente; nos demais, o dia 1 daquele mês.
+ * Sugerir `todayISO()` cego fazia o gasto lançado olhando julho ser gravado em
+ * agosto: a linha piscava na lista de julho (update otimista) e sumia, e o total
+ * de agosto no dashboard subia sozinho.
+ *
+ * `today` entra por parâmetro para o teste não depender do relógio.
+ */
+export function defaultSpentOn(year: number, month: number, today: Date): string {
+  if (year === today.getFullYear() && month === today.getMonth() + 1) {
+    return todayISO()
+  }
+  return `${year}-${String(month).padStart(2, '0')}-01`
+}
+
 /** 'YYYY-MM-DD' → Date local à meia-noite (sem passar por UTC). */
 function parseISODate(iso: string): Date {
   const [year, month, day] = iso.split('-').map(Number)

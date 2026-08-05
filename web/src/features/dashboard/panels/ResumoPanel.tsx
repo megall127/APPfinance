@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatBRL } from '@/lib/format'
-import { ShieldCheck, Clock } from 'lucide-react'
+import { ShieldCheck, Clock, ShoppingBag } from 'lucide-react'
 import { ProgressRing } from '../ProgressRing'
 import type { DashboardData } from '../useDashboard'
 
@@ -61,6 +61,20 @@ export function ResumoPanel({ data, isLoading }: ResumoPanelProps) {
               </p>
             </div>
           </div>
+
+          {/* Sem esta linha o total do topo não fecha com as contas de baixo:
+              o gasto avulso está no total mas fora de pago/falta de propósito. */}
+          {data.gastosVariaveis > 0 && (
+            <div className="flex items-center gap-2">
+              <ShoppingBag className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Gastos avulsos</p>
+                <p className="truncate text-lg font-semibold text-foreground tabular-nums">
+                  {formatBRL(data.gastosVariaveis)}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Card>

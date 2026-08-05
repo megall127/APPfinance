@@ -23,7 +23,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { parseAmountInput } from '@/features/lancamentos/math'
 import { useCategories } from '@/features/categorias/useCategories'
-import { todayISO } from './grouping'
+import { defaultSpentOn } from './grouping'
 import {
   useCreateExpense,
   useDeleteExpense,
@@ -72,7 +72,12 @@ export function ExpenseFormDialog({
 
   const form = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
-    defaultValues: { amount: '', spentOn: todayISO(), description: '', categoryId: NO_CATEGORY },
+    defaultValues: {
+      amount: '',
+      spentOn: defaultSpentOn(year, month, new Date()),
+      description: '',
+      categoryId: NO_CATEGORY,
+    },
   })
 
   // Re-preenche sempre que o diálogo abre, para não herdar o gasto anterior.
@@ -89,9 +94,14 @@ export function ExpenseFormDialog({
             // handleSubmit nunca dispara — o botão Salvar vira um clique morto.
             categoryId: expense.categoryId != null ? String(expense.categoryId) : NO_CATEGORY,
           }
-        : { amount: '', spentOn: todayISO(), description: '', categoryId: NO_CATEGORY },
+        : {
+            amount: '',
+            spentOn: defaultSpentOn(year, month, new Date()),
+            description: '',
+            categoryId: NO_CATEGORY,
+          },
     )
-  }, [open, expense, form])
+  }, [open, expense, form, year, month])
 
   const pending = create.isPending || update.isPending || remove.isPending
 

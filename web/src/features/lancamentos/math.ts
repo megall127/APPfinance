@@ -32,13 +32,13 @@ export function parseAmountInput(input: string): number | null {
 }
 
 export interface MonthSummary {
-  /** Sum of EXPENSE amounts (entries + planned defaults). */
+  /** Sum of EXPENSE amounts actually recorded this month. */
   total: number
   /** Sum of EXPENSE amounts whose entry is paid. */
   pago: number
   /** total − pago. */
   falta: number
-  /** Sum of INCOME amounts (entries + planned defaults). */
+  /** Sum of INCOME amounts actually recorded this month. */
   receitas: number
   /** receitas − total. */
   saldo: number
@@ -47,33 +47,31 @@ export interface MonthSummary {
 /**
  * Computes the month totals from the loaded entry rows, client-side.
  *
- * EXPENSE items count toward the totals (income/card items are excluded):
- *   - with an entry  → use the entry amount; add to `pago` when status is 'paid'.
- *   - with NO entry  → use the item's `defaultAmount` as the planned (unpaid) amount,
- *                      so the suggested defaults shown in the grid are reflected here.
- *   total = sum of expense amounts (saved entries + planned defaults)
- *   pago  = sum of expense amounts whose entry status is 'paid'
- *   falta = total − pago
+ * Conta o REALIZADO, nunca o planejado: um item sem lançamento no mês não entra
+ * em soma nenhuma, mesmo que a grade exiba o `defaultAmount` em itálico como
+ * sugestão. Essa é a mesma regra do dashboard (DashboardService.monthSummary faz
+ * INNER JOIN monthly_entries → items), e as duas telas precisam bater — foi
+ * justamente a divergência entre elas que fazia "Total do mês" mostrar dois
+ * valores diferentes sob o mesmo rótulo.
+ *
+ *   total    = soma das entries de kind='expense'
+ *   pago     = soma das entries de kind='expense' com status 'paid'
+ *   falta    = total − pago
+ *   receitas = soma das entries de kind='income'
  */
 export function computeMonthSummary(rows: EntryRow[]): MonthSummary {
   let total = 0
   let pago = 0
   let receitas = 0
   for (const { item, entry } of rows) {
-    // Effective amount: the saved entry amount, or the item's default as a
-    // planned value when there's no entry yet.
-    let amount: number
-    if (entry) {
-      amount = Number(entry.amount)
-      if (!Number.isFinite(amount)) continue
-    } else {
-      amount = Number(item.defaultAmount)
-      if (!Number.isFinite(amount) || amount <= 0) continue
-    }
+    if (!entry) continue
+
+    const amount = Number(entry.amount)
+    if (!Number.isFinite(amount)) continue
 
     if (item.kind === 'expense') {
       total += amount
-      if (entry && entry.status === 'paid') pago += amount
+      if (entry.status === 'paid') pago += amount
     } else if (item.kind === 'income') {
       receitas += amount
     }

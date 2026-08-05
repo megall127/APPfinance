@@ -36,7 +36,10 @@ vi.mock('@/lib/api', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
-function renderDialog(expense: VariableExpense | null) {
+function renderDialog(
+  expense: VariableExpense | null,
+  periodo: { year: number; month: number } = { year: 2026, month: 8 },
+) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
@@ -44,8 +47,8 @@ function renderDialog(expense: VariableExpense | null) {
         open
         onOpenChange={() => {}}
         expense={expense}
-        year={2026}
-        month={8}
+        year={periodo.year}
+        month={periodo.month}
       />
     </QueryClientProvider>,
   )
@@ -118,6 +121,20 @@ describe('ExpenseFormDialog', () => {
 
     await waitFor(() => expect(post).toHaveBeenCalledTimes(1))
     expect(post.mock.calls[0][1]?.amount).toBe(1234.56)
+  })
+
+  it('na criação, a data cai no mês exibido — não em hoje', async () => {
+    // Regressão: o campo nascia em todayISO() ignorando o mês da página. Lançar
+    // um gasto olhando um mês passado gravava em HOJE: a linha piscava na lista
+    // (update otimista), sumia, e o total do MÊS CORRENTE subia no dashboard.
+    const user = userEvent.setup()
+    renderDialog(null, { year: 2020, month: 7 })
+
+    await user.type(screen.getByLabelText('Valor'), '50,00')
+    await user.click(screen.getByRole('button', { name: 'Salvar' }))
+
+    await waitFor(() => expect(post).toHaveBeenCalledTimes(1))
+    expect(post.mock.calls[0][1]?.spentOn).toBe('2020-07-01')
   })
 
   it('não envia nada quando o valor está vazio', async () => {
